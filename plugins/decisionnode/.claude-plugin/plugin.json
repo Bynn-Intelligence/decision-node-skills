@@ -1,0 +1,33 @@
+{
+  "name": "decisionnode",
+  "version": "0.1.0",
+  "description": "Integrate DecisionNode: pick truth, choice or score, write the state and the questions, read probabilities and confidence, batch with decide and decide_many, send images, handle errors and retries, and use the SDKs, the dn CLI and the MCP server. Bundles the DecisionNode MCP server.",
+  "license": "MIT",
+  "author": {
+    "name": "Bynn Intelligence",
+    "url": "https://decisionnode.com"
+  },
+  "homepage": "https://docs.decisionnode.com",
+  "repository": "https://github.com/Bynn-Intelligence/decision-node-skills",
+  "keywords": [
+    "decisionnode",
+    "classification",
+    "decision",
+    "probability",
+    "routing",
+    "triage",
+    "mcp"
+  ],
+  "mcpServers": {
+    "decisionnode": {
+      "type": "http",
+      "url": "https://mcp.decisionnode.com",
+      "headers": {
+        "Authorization": "Bearer ${DECISIONNODE_API_KEY}"
+      }
+    }
+  },
+  "skills": [
+    "./skills/decisionnode"
+  ]
+}

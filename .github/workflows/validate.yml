@@ -1,0 +1,64 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Validate JSON, marketplace, plugin and server manifests
+        run: python3 hooks/validate_manifests.py
+
+      - name: Check every version agrees
+        run: python3 hooks/check_versions.py
+
+      - name: Validate skill front matter and links
+        run: python3 hooks/check_skills.py
+
+      - name: Validate server.json against the MCP registry schema
+        run: |
+          set -euo pipefail
+          pip install --quiet jsonschema==4.26.0
+          schema_url=$(python3 -c "import json;print(json.load(open('server.json'))['\$schema'])")
+          curl -fsSL "$schema_url" -o /tmp/server.schema.json
+          python3 - <<'EOF'
+          import json, sys
+          import jsonschema
+          schema = json.load(open("/tmp/server.schema.json"))
+          data = json.load(open("server.json"))
+          errors = list(jsonschema.validators.validator_for(schema)(schema).iter_errors(data))
+          for e in errors:
+              print(f"::error::server.json {list(e.path)}: {e.message}")
+          sys.exit(1 if errors else 0)
+          EOF
+
+      - name: Resolve every skill through the skills CLI
+        run: |
+          set -euo pipefail
+          npx --yes skills@1.7.1 add . --list > /tmp/list.txt 2>&1 || {
+            cat /tmp/list.txt; exit 1;
+          }
+          sed 's/\x1b\[[0-9;]*m//g' /tmp/list.txt > /tmp/plain.txt
+          expected=$(python3 -c "import json;print(sum(len(p['skills']) for p in json.load(open('.claude-plugin/marketplace.json'))['plugins']))")
+          grep -qE "Found ${expected} skills?" /tmp/plain.txt || {
+            echo "::error::CLI did not resolve all ${expected} skills"
+            cat /tmp/plain.txt
+            exit 1
+          }
+          echo "CLI resolved ${expected} skills"

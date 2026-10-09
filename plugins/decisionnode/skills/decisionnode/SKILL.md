@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.4"
+  version: "0.2.5"
 license: MIT
 ---
 
@@ -161,7 +161,7 @@ response as `evidence`. Boosters never answer or add a question.
   times out. Without `require`, the decision runs without that reading and
   `evidence` says why.
 - The response adds `evidence` (per booster: `version`, `status` of `ok`, `timeout`,
-  `error` or `skipped`, `latency_ms`, `results`), `usage.booster_tokens` and
+  `error` or `skipped`, `latency_ms`, `billed_calls`, `results`), `usage.booster_tokens` and
   `usage.boosters` (the calls billed), and the header
   `x-decisionnode-boosters: age=ok:212,ai_generated=timeout:800`.
 - USD 0.002 per booster call billed (one per booster and image read with status

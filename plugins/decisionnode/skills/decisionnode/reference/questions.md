@@ -228,14 +228,14 @@ The response:
   },
   "evidence": {
     "age": {
-      "version": "age-v3", "status": "ok", "latency_ms": 212,
+      "version": "age-v3", "status": "ok", "latency_ms": 212, "billed_calls": 2,
       "results": [
         { "image": "person", "age_years": 27, "low": 22, "high": 33, "confidence": 0.81, "faces": 1 },
         { "image": "poster", "faces": 0 }
       ]
     },
     "ai_generated": {
-      "version": "ai_generated-v2", "status": "ok", "latency_ms": 340,
+      "version": "ai_generated-v2", "status": "ok", "latency_ms": 340, "billed_calls": 1,
       "results": [
         { "image": "poster", "generated": 0.93, "confidence": 0.86, "method": "inference",
           "top_generator": { "name": "<generator>", "probability": 0.71 }, "c2pa_signer": null }
@@ -249,6 +249,7 @@ The response:
 | Field | Notes |
 |---|---|
 | `evidence` | One entry per booster the request named, in its order. Only when the request named boosters. |
+| `evidence.<name>.billed_calls` | The calls of this booster billed on this request: one per image it read with status `ok`, and 0 for a reading served again from the last hour's, a booster that failed or timed out, and a refused request. The entries sum to `usage.boosters`. |
 | `evidence.<name>.status` | `ok`; `timeout` (no answer within its budget); `error`; `skipped` (none of the request's images is one it reads). `results` is empty unless `ok`. |
 | `evidence.<name>.results` | One entry per image read, named by `image`. `age`: `age_years`, `low`, `high`, `confidence`, `faces` (with `faces` 0 the age fields are left out). `ai_generated`: `generated` (probability the picture was made by a generator), `confidence`, `method` (`inference` from the pixels, `c2pa` when the file's trusted Content Credentials declare it generated or edited by AI, which overrides the pixels), `top_generator` (`name`, `probability`; `null` unless an `inference` reading says likely generated, and always `null` on a `c2pa` reading), `c2pa_signer` (who signed trusted Content Credentials, else `null`), and `c2pa: "untrusted"` only when the file's Content Credentials validate but are not trusted (no signer, no override). A photograph reads `"top_generator": null`. |
 | `usage.booster_tokens` | The readings' share of `input_tokens`, counted once per request |

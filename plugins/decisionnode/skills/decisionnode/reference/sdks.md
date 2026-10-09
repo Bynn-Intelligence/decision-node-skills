@@ -103,13 +103,15 @@ server's to judge.
 (`["age", "ai_generated"]`) is the normal form. An entry is a booster name or, for
 a booster that needs an option, `Booster(name, images, require, options)`, sent as
 `{"name": name, "images"?, "require"?, "options"?}` with each argument left out
-when not given. Left out or empty, the request carries no `boosters` key. Names are
+when not given; a `Booster` with no option set is sent as the bare name. Left out
+or empty, the request carries no `boosters` key. Names are
 strings, not a closed set, so a booster added on the server works with an older
 SDK; TypeScript types them as `"age" | "ai_generated" | (string & {})`.
 
 `decision.evidence` maps each booster's name, in the request's order, to an
 `Evidence` with `version`, `status` (`ok`, `timeout`, `error`, `skipped`, or any
-other value as received), `latency_ms` and `results`. Each result is an
+other value as received), `latency_ms`, `billed_calls` (the calls of that booster
+billed on the request) and `results`. Each result is an
 `AgeReading` (`image`, `faces`, `age_years`, `low`, `high`, `confidence`; the age
 fields empty when `faces` is 0) or an `AiGeneratedReading` (`image`, `generated`,
 `confidence`, `method`, `top_generator` with `name` and `probability` or empty

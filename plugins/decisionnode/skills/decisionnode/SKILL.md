@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.5"
+  version: "0.2.6"
 license: MIT
 ---
 
@@ -164,9 +164,10 @@ response as `evidence`. Boosters never answer or add a question.
   `error` or `skipped`, `latency_ms`, `billed_calls`, `results`), `usage.booster_tokens` and
   `usage.boosters` (the calls billed), and the header
   `x-decisionnode-boosters: age=ok:212,ai_generated=timeout:800`.
-- USD 0.002 per booster call billed (one per booster and image read with status
+- A price per booster call billed (one per booster and image read with status
   `ok`); a timed-out or failed call is free, and a refused request pays nothing for
-  its boosters.
+  its boosters. The current prices are on the pricing page:
+  `https://decisionnode.com/docs/pricing`.
 - `POST /v1/decide` and batch lines take boosters; sessions do not.
 
 Details: [reference/questions.md](reference/questions.md#boosters).

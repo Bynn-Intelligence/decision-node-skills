@@ -257,9 +257,10 @@ The response:
 
 Every response of a request that named boosters, errors included, carries
 `x-decisionnode-boosters` with each booster's status and time in request order:
-`age=ok:212,ai_generated=timeout:800`. Price: USD 0.002 per booster call billed,
-from the prepaid balance with the request's tokens; the readings' tokens are input
-tokens at the model's price. A timed-out or failed booster is free, and a request
+`age=ok:212,ai_generated=timeout:800`. Each booster call billed has a price, drawn
+from the prepaid balance with the request's tokens, and the readings' tokens are
+input tokens at the model's price; the current prices are on
+`https://decisionnode.com/docs/pricing`. A timed-out or failed booster is free, and a request
 refused by the safety check pays nothing for its boosters. Every booster is on for
 a new workspace; an owner or admin can turn one off in the console.
 
@@ -282,5 +283,6 @@ that is not deployed and another workspace's model are all the 400
 `GET /v1/models` lists the workspace's deployed and ready versions under their
 pinned names, and the plain name of each model with a deployed version, each with
 `fine_tuned: true`, `base`, `adapter_version` and `status` (`deployed` or `ready`;
-only `deployed` answers decisions). Price: the base's price per input token plus
-USD 0.02 per million input tokens.
+only `deployed` answers decisions). A fine-tuned model is billed at its base's
+price per input token plus a premium; the current prices are on
+`https://decisionnode.com/docs/pricing`.

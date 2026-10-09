@@ -111,10 +111,12 @@ SDK; TypeScript types them as `"age" | "ai_generated" | (string & {})`.
 other value as received), `latency_ms` and `results`. Each result is an
 `AgeReading` (`image`, `faces`, `age_years`, `low`, `high`, `confidence`; the age
 fields empty when `faces` is 0) or an `AiGeneratedReading` (`image`, `generated`,
-`confidence`, `method`, `top_generator` with `name` and `probability`,
-`c2pa_signer`). A reading of a booster the SDK does not know, or one with a field
+`confidence`, `method`, `top_generator` with `name` and `probability` or empty
+when the picture does not read as likely generated, `c2pa_signer`, and `c2pa`,
+which is `"untrusted"` for Content Credentials that are not trusted and empty
+otherwise). A reading of a booster the SDK does not know, or one with a field
 missing or of the wrong type, is a generic reading holding its raw fields, and the
-decision does not fail.
+decision does not fail. Fields the SDK does not know are ignored.
 
 Every error of a request that named boosters carries `boosters`: the
 `x-decisionnode-boosters` header parsed into booster name to `status` and

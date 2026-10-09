@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.0"
+  version: "0.2.1"
 license: MIT
 ---
 
@@ -144,7 +144,7 @@ response as `evidence`. Boosters never answer or add a question.
 | Booster | Reads | Returns per image |
 |---|---|---|
 | `age` | A picture of a person (the largest face) | `age_years`, `low`, `high`, `confidence`, `faces` |
-| `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator`, `c2pa_signer` |
+| `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator` (null unless likely generated), `c2pa_signer`, and `c2pa: "untrusted"` when the file's Content Credentials are not trusted |
 
 ```json
 "boosters": ["age", { "booster": "ai_generated", "images": ["poster"], "require": true }]

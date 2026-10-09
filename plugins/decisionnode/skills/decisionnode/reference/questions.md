@@ -189,15 +189,20 @@ frames or a lower resolution than sent, `warnings`.
     { "id": "person", "upload_id": "upl_..." },
     { "id": "poster", "url": "https://files.example.com/poster.jpg" }
   ],
-  "boosters": [
-    "age",
-    { "name": "ai_generated", "images": ["poster"], "require": true }
-  ],
+  "boosters": ["age", "ai_generated"],
   "questions": {
     "adult": { "type": "truth", "instructions": "Is the person in the first picture an adult?" },
     "synthetic": { "type": "truth", "instructions": "Is the second picture AI-generated?" }
   }
 }
+```
+
+A plain list of names is the normal form. A booster that needs an option is an
+object with its `name`; here `ai_generated` reads only the second picture, and the
+request fails if it cannot:
+
+```json
+"boosters": ["age", { "name": "ai_generated", "images": ["poster"], "require": true }]
 ```
 
 | Field | Notes |

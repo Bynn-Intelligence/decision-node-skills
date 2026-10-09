@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.3"
+  version: "0.2.4"
 license: MIT
 ---
 
@@ -150,13 +150,16 @@ response as `evidence`. Boosters never answer or add a question.
 | `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator` (null unless likely generated), `c2pa_signer`, and `c2pa: "untrusted"` when the file's Content Credentials are not trusted |
 
 ```json
-"boosters": ["age", { "name": "ai_generated", "images": ["poster"], "require": true }]
+"boosters": ["age", "ai_generated"]
 ```
 
-- Up to 4 per request, each once, by name or as an object: `images` limits the
-  booster to some of the request's images, `require: true` fails the request with
-  the 529 `booster_unavailable` when that booster fails or times out. Without
-  `require`, the decision runs without that reading and `evidence` says why.
+- A plain list of names is the normal form: up to 4 per request, each once.
+- A booster that needs an option is an object with its `name`:
+  `"boosters": ["age", { "name": "ai_generated", "images": ["poster"], "require": true }]`.
+  `images` limits the booster to some of the request's images, and `require: true`
+  fails the request with the 529 `booster_unavailable` when that booster fails or
+  times out. Without `require`, the decision runs without that reading and
+  `evidence` says why.
 - The response adds `evidence` (per booster: `version`, `status` of `ok`, `timeout`,
   `error` or `skipped`, `latency_ms`, `results`), `usage.booster_tokens` and
   `usage.boosters` (the calls billed), and the header

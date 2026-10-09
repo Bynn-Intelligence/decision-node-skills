@@ -99,8 +99,9 @@ server's to judge.
 
 ## Boosters
 
-`boosters` is a list in the caller's order. Each entry is a booster name
-(`"age"`, `"ai_generated"`) or `Booster(name, images, require, options)`, sent as
+`boosters` is a list in the caller's order; a plain list of names
+(`["age", "ai_generated"]`) is the normal form. An entry is a booster name or, for
+a booster that needs an option, `Booster(name, images, require, options)`, sent as
 `{"name": name, "images"?, "require"?, "options"?}` with each argument left out
 when not given. Left out or empty, the request carries no `boosters` key. Names are
 strings, not a closed set, so a booster added on the server works with an older
@@ -190,12 +191,15 @@ d = dn.decide(
         "adult": truth("Is the person in the first picture an adult?"),
         "synthetic": truth("Is the second picture AI-generated?"),
     },
-    boosters=["age", Booster("ai_generated", images=["poster"], require=True)],
+    boosters=["age", "ai_generated"],
 )
 
 d["adult"].truth                          # 0.97
 d.evidence["age"].results[0].age_years    # 27
 d.usage.boosters                          # booster calls billed
+
+# A booster that needs an option: only the poster, and fail if it cannot be read.
+boosters = ["age", Booster("ai_generated", images=["poster"], require=True)]
 ```
 
 Many records:

@@ -34,6 +34,7 @@
 | `images` | Optional, up to 16. See below. |
 | `videos` | Optional, up to 4, sent as frames. See below. |
 | `boosters` | Optional, up to 4. See below. |
+| `fallback` | Optional, default `true`: a request for `decisionnode-1.0` that no ready worker can take at once is answered by `decisionnode-1.0-flash`, with `x-decisionnode-fallback` and `x-decisionnode-requested-model` naming the two. `false`: the 529 with `Retry-After` instead. Live `decide` only. |
 
 A field sent as `null` equals a field left out.
 
@@ -190,7 +191,7 @@ frames or a lower resolution than sent, `warnings`.
   ],
   "boosters": [
     "age",
-    { "booster": "ai_generated", "images": ["poster"], "require": true }
+    { "name": "ai_generated", "images": ["poster"], "require": true }
   ],
   "questions": {
     "adult": { "type": "truth", "instructions": "Is the person in the first picture an adult?" },
@@ -202,7 +203,7 @@ frames or a lower resolution than sent, `warnings`.
 | Field | Notes |
 |---|---|
 | `boosters` | Up to 4 entries, each a booster name or an object, each booster at most once. `null` and `[]` mean none. |
-| `booster` (in an object) | The booster's name |
+| `name` (in an object) | The booster's name. An object takes only `name`, `images`, `require` and `options`. |
 | `images` (in an object) | The request's image ids the booster reads. Left out: every image. |
 | `require` (in an object) | `true`: a booster that fails or does not answer in time fails the request with the 529 `booster_unavailable`. Otherwise the decision runs without that reading. |
 | `options` (in an object) | Settings of a booster; neither `age` nor `ai_generated` has any, so a key here is a 400 |

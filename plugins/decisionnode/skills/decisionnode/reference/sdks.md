@@ -101,7 +101,7 @@ server's to judge.
 
 `boosters` is a list in the caller's order. Each entry is a booster name
 (`"age"`, `"ai_generated"`) or `Booster(name, images, require, options)`, sent as
-`{"booster": name, "images"?, "require"?, "options"?}` with each argument left out
+`{"name": name, "images"?, "require"?, "options"?}` with each argument left out
 when not given. Left out or empty, the request carries no `boosters` key. Names are
 strings, not a closed set, so a booster added on the server works with an older
 SDK; TypeScript types them as `"age" | "ai_generated" | (string & {})`.
@@ -123,6 +123,15 @@ Every error of a request that named boosters carries `boosters`: the
 `latency_ms`, so you can see which required booster failed. A 403
 `booster_not_enabled` is a `PermissionDeniedError`; a 529 `booster_unavailable`
 is an `OverloadedError`, retried as every 529.
+
+## Fallback
+
+`decide`, the helpers, `decide_many`'s requests and batch lines take `fallback`
+(a boolean), sent only when given. `decision.fallback` is empty on an ordinary
+answer, and holds `served_model` and `requested_model` when `decisionnode-1.0`
+was answered by `decisionnode-1.0-flash` because no worker of it was ready;
+`decision.model` is the model that answered. With `fallback=False` such a
+request is a 529, an `OverloadedError` retried like any 529.
 
 ## Fine-tuned models
 

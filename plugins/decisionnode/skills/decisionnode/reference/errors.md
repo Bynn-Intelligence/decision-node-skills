@@ -43,7 +43,7 @@ class locally, before any request.
 | 400, `max_tokens_exceeded` | `ContextLimitError` | Shorten the state, send fewer or smaller images, or split the questions; the reason gives the count and the limit |
 | 400, `booster_unknown` | `BadRequestError` | A name that is not a booster. Check the spelling. |
 | 400, `booster_input_mismatch` | `BadRequestError` | A booster that reads images on a request without one, or an `images` entry that is not an image of the request |
-| 400, `api_usage_error` on `boosters` | `BadRequestError` | The list is malformed: more than 4, a booster named twice, an entry that is neither a name nor an object with `booster`, a key in `options`. The reason says which. |
+| 400, `api_usage_error` on `boosters` | `BadRequestError` | The list is malformed: more than 4, a booster named twice, an entry that is neither a name nor an object with `name`, a key of the object other than `name`, `images`, `require` and `options`, a key in `options`. The reason says which. |
 | 401 | `AuthenticationError` | Key missing or wrong. Check `DECISIONNODE_API_KEY`. |
 | 402 | `InsufficientCreditError` | The prepaid balance is empty. Send again only after credit is added. |
 | 403, `refusal_error` | `RefusalError` (`category`: `harm` or `self_harm`) | Refused under the usage policy. Do not retry. |

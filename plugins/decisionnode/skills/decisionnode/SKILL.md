@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.2"
+  version: "0.2.3"
 license: MIT
 ---
 
@@ -150,7 +150,7 @@ response as `evidence`. Boosters never answer or add a question.
 | `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator` (null unless likely generated), `c2pa_signer`, and `c2pa: "untrusted"` when the file's Content Credentials are not trusted |
 
 ```json
-"boosters": ["age", { "booster": "ai_generated", "images": ["poster"], "require": true }]
+"boosters": ["age", { "name": "ai_generated", "images": ["poster"], "require": true }]
 ```
 
 - Up to 4 per request, each once, by name or as an object: `images` limits the
@@ -189,6 +189,15 @@ unencrypted or unexpected connection. Full table:
 cheaper. Pin a version (`decisionnode-1.0`, `decisionnode-1.0-flash`) when answers
 must not move under you. Each model's limits (tokens per request, images and more)
 are published at `GET /v1/models`; check them there instead of hard-coding them.
+
+When `decisionnode-1.0` has no worker ready at once, the API answers from
+`decisionnode-1.0-flash` instead of making you wait: the body's `model` is the
+model that answered, and the headers `x-decisionnode-fallback` and
+`x-decisionnode-requested-model` name the two (`decision.fallback` in the SDKs).
+It is billed at Flash's price. Send `"fallback": false` (the SDKs' `fallback`
+option) to get the 529 with `Retry-After` instead; the SDKs retry it. Only live
+`decide` calls for `decisionnode-1.0` fall back: Flash, fine-tuned models,
+sessions and batch lines never do.
 
 A workspace can train a **fine-tuned model** on decisions it has labelled, in the
 console. Call it by name in `model`, with a key of that workspace:

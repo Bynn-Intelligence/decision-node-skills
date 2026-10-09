@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.1"
+  version: "0.2.2"
 license: MIT
 ---
 
@@ -124,7 +124,10 @@ Up to 16 images per request, JPEG, PNG or WebP, 10 MB each, within the model's
 token limit. Send an `https` `url` when you can (nothing is uploaded); otherwise
 base64 `data` with a `media_type`, or an `upload_id` from `POST /v1/uploads`
 (valid for one hour). The SDKs choose for you: local images go inline when they
-total under 512 KiB in a request, and are uploaded at or above it. Each image has
+total under 512 KiB in a request, and are uploaded at or above it. A request body
+is at most 25 MiB (26,214,400 bytes): inline base64 counts toward it, uploads and
+URLs do not, and the SDKs refuse a larger body before sending it
+(`RequestTooLargeError`). Each image has
 an `id` that the state or the instructions can refer to. Every question sees every
 image. DecisionNode reads text, amounts and layout in images, and answers through
 the question types; it does not return free text, so for open-ended reading use
@@ -170,7 +173,7 @@ Details: [reference/questions.md](reference/questions.md#boosters).
 The SDKs retry 408, 429, 500 to 599 (529 included), timeouts and connection errors
 twice, honouring `retry-after-ms` and `Retry-After` up to 60 s. The 10 s timeout
 covers the whole attempt. A decision changes nothing on the server, so a retry is
-always safe. 400, 401, 402, 403, 404 and 422 are never retried: fix the request.
+always safe. 400, 401, 402, 403, 404, 413 and 422 are never retried: fix the request.
 The `x-decisionnode-error` header (`reason` in the SDKs and the CLI) says in words
 what is wrong. A 403 is either a refusal under the usage policy (`RefusalError`),
 which repeats if resent, or a `PermissionDeniedError` (a booster turned off for

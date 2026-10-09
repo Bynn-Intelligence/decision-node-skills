@@ -151,7 +151,9 @@ uploaded), `{id, data, media_type}` with base64 bytes (`image/jpeg`, `image/png`
 `image/webp`), or `{id, upload_id}` naming an upload of the same workspace from
 `POST /v1/uploads`, valid for one hour. Up to 16 per request, 10 MB each, within the
 model's token limit: image tokens count toward it and are part of
-`usage.input_tokens`. The SDKs and the CLI pick the form for local files.
+`usage.input_tokens`. A request body is at most 25 MiB (26,214,400 bytes); inline
+base64 counts toward it, so images of more than about a megabyte go as uploads or
+URLs. The SDKs and the CLI pick the form for local files.
 
 ## Videos
 

@@ -3,7 +3,7 @@
   "name": "com.decisionnode/decisionnode",
   "title": "DecisionNode docs",
   "description": "Search and read the DecisionNode documentation: the API, question types, SDKs and CLI.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "websiteUrl": "https://decisionnode.com/docs",
   "repository": {
     "url": "https://github.com/Bynn-Intelligence/decision-node-skills",

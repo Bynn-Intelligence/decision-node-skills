@@ -10,8 +10,8 @@ Built into every SDK and the CLI:
   timeouts, connection errors.
 - Wait: `retry-after-ms` when sent, else `Retry-After` (seconds or an HTTP date),
   capped at 60 s; else exponential backoff from 0.5 s with jitter, capped at 8 s.
-- Never retried: 400, 401, 402, 403, 404, 422. Resending them unchanged gives the
-  same error.
+- Never retried: 400, 401, 402, 403, 404, 413, 422. Resending them unchanged gives
+  the same error.
 
 Do not wrap an SDK call in a second retry loop. If you run many requests, keep
 concurrency modest (8 is the default) and let 429s slow you down.
@@ -49,6 +49,7 @@ class locally, before any request.
 | 403, `refusal_error` | `RefusalError` (`category`: `harm` or `self_harm`) | Refused under the usage policy. Do not retry. |
 | 403, any other | `PermissionDeniedError` | Not allowed: `booster_not_enabled` (the booster is turned off for the workspace), `workspace_suspended`. Do not retry. |
 | 404 | `NotFoundError` | Wrong path or base URL |
+| 413, or over 26,214,400 bytes before sending | `RequestTooLargeError` | The body is over 25 MiB. Send large images as uploads (`POST /v1/uploads`) or by URL. The SDKs check the encoded body before sending and raise this locally, sending nothing. |
 | 422 | `ValidationError` (`entries`) | A field is missing or of the wrong type, or a list is too long (more than 16 images, more than 4 videos); `entries` lists each one |
 | 429 | `RateLimitError` (`retry_after`) | Retried automatically; raised only after the retries |
 | 529 | `OverloadedError` (`retry_after`) | Retried automatically. With `error_type` `booster_unavailable`, a booster with `require: true` failed or timed out; `boosters` shows which. |

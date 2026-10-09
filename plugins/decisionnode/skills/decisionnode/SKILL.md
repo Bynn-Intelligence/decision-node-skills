@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.7"
+  version: "0.2.8"
 license: MIT
 ---
 

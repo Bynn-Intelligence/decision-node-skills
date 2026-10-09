@@ -1,7 +1,7 @@
 {
   "name": "decisionnode",
   "description": "Official skills for DecisionNode: fast, calibrated yes-or-no, choice, score, number, point and box decisions for applications and agents.",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "owner": {
     "name": "Bynn Intelligence",
     "url": "https://github.com/Bynn-Intelligence/decision-node-skills"

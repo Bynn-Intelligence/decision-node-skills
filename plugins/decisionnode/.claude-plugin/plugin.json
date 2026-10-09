@@ -1,6 +1,6 @@
 {
   "name": "decisionnode",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Integrate DecisionNode: pick truth, choice, score, number, point or box, write the state and the questions, read probabilities and confidence, batch with decide, decide_many and the Batch API, send images and videos, add boosters, call fine-tuned models, handle errors and retries, and use the SDKs and the dn CLI. Bundles the DecisionNode docs MCP server.",
   "license": "MIT",
   "author": {

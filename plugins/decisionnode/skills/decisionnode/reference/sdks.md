@@ -119,7 +119,9 @@ when the picture does not read as likely generated, `c2pa_signer`, and `c2pa`,
 which is `"untrusted"` for Content Credentials that are not trusted and empty
 otherwise). A reading of a booster the SDK does not know, or one with a field
 missing or of the wrong type, is a generic reading holding its raw fields, and the
-decision does not fail. Fields the SDK does not know are ignored.
+decision does not fail. So are the entries of pictures a booster did not read
+(`{"image": id}` under a `timeout` or `error` status) or could not decode
+(`{"image": id, "readable": false}`). Fields the SDK does not know are ignored.
 
 Every error of a request that named boosters carries `boosters`: the
 `x-decisionnode-boosters` header parsed into booster name to `status` and

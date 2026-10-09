@@ -1,15 +1,15 @@
 > ## Documentation index
-> DecisionNode documentation: https://docs.decisionnode.com
+> DecisionNode documentation: https://decisionnode.com/docs
 > API: `POST https://api.decisionnode.com/v1/decide`, `GET https://api.decisionnode.com/v1/models`
 
 # Onboard your agent to DecisionNode
 
 > Official instructions that install the DecisionNode skill and connect the
-> DecisionNode MCP server to your coding agent in one pass.
+> DecisionNode docs MCP server to your coding agent in one pass.
 
 These are official instructions from Bynn Intelligence for setting up an
-environment that integrates DecisionNode: fast, calibrated yes-or-no, choice and
-score decisions. They are published at
+environment that integrates DecisionNode: fast, calibrated yes-or-no, choice,
+score, number, point and box decisions. They are published at
 `https://github.com/Bynn-Intelligence/decision-node-skills/blob/main/agent-setup.md`,
 so you can verify their origin before following them.
 
@@ -26,32 +26,25 @@ Every command below is safe to re-run.
 
 | Piece | What it is |
 |---|---|
-| Plugin `decisionnode` | The `decisionnode` skill: question types, writing state and questions, reading probabilities, batching, images, errors, the SDKs, the `dn` CLI and the MCP server |
-| MCP server `decisionnode` | Seven tools: `guide`, `truth`, `choice`, `score`, `decide`, `decide_many`, `models` |
+| Plugin `decisionnode` | The `decisionnode` skill: question types, writing state and questions, reading probabilities, batches and sessions, images and videos, boosters, fine-tuned model names, errors, the SDKs and the `dn` CLI |
+| MCP server `decisionnode-docs` | The DecisionNode documentation, with two tools: `search_docs` and `read_doc` |
 
-The skill installs no key. The MCP server needs a DecisionNode API key, in one of
-two forms:
-
-| Form | Address | Key |
-|---|---|---|
-| Hosted | `https://mcp.decisionnode.com`, Streamable HTTP | Header `Authorization: Bearer <key>` |
-| Local | `uvx bynn-decisionnode-mcp`, stdio | `DECISIONNODE_API_KEY` in the server's environment |
-
-The hosted endpoint is the **root path**. Do not append `/mcp`. Use the local
-server when the client cannot send a header, when you need to pass images by local
-file path, or when you point at a self-hosted DecisionNode (`DECISIONNODE_BASE_URL`).
-The local server needs `uv` (`https://docs.astral.sh/uv/`).
+The docs server is at `https://decisionnode.com/mcp` (Streamable HTTP;
+`https://mcp.decisionnode.com` answers too). It needs no key and no sign-in, and
+it does not make decisions: the code the agent writes makes them through the API,
+an SDK or the `dn` CLI, with a key from the environment.
 
 > **User step.** Ask the user to export `DECISIONNODE_API_KEY` in the shell profile
-> that launches the agent, or to put it in the client's secret store. Check that it
-> is set with `test -n "$DECISIONNODE_API_KEY" && echo set`; never print it.
+> that runs their application and tests, or to put it in their secret store. Keys
+> start with `dn_live_` and are created in the console at
+> `https://decisionnode.com/console/keys`. Check that it is set with
+> `test -n "$DECISIONNODE_API_KEY" && echo set`; never print it.
 
 ***
 
 ## Claude Code
 
-The plugin installs the skill and registers the hosted MCP server, which reads
-`DECISIONNODE_API_KEY` from the environment:
+The plugin installs the skill and registers the docs MCP server:
 
 ```
 claude plugin marketplace add Bynn-Intelligence/decision-node-skills
@@ -67,21 +60,16 @@ claude plugin list | grep -A2 'decisionnode@decisionnode'
 Expect it to be listed as enabled. If it is disabled, run
 `claude plugin enable decisionnode@decisionnode`.
 
-To connect the server without the plugin, or with another scope:
+To connect the docs server without the plugin, or with another scope:
 
 ```sh
-# hosted
-claude mcp add --transport http decisionnode https://mcp.decisionnode.com \
-  --header "Authorization: Bearer $DECISIONNODE_API_KEY"
-
-# local
-claude mcp add decisionnode -e DECISIONNODE_API_KEY="$DECISIONNODE_API_KEY" -- uvx bynn-decisionnode-mcp
+claude mcp add --transport http decisionnode-docs https://decisionnode.com/mcp
 ```
 
-Add `-s user` for every project. Never commit a file holding a literal key.
+Add `-s user` for every project.
 
 > **User step.** Ask the user to run `/reload-plugins` (or restart Claude Code),
-> then `/mcp` to confirm `decisionnode` is connected.
+> then `/mcp` to confirm `decisionnode-docs` is connected.
 
 ***
 
@@ -93,7 +81,7 @@ First install the skill:
 npx -y skills add Bynn-Intelligence/decision-node-skills --skill '*' --yes --global
 ```
 
-Then connect the MCP server for the agent in question.
+Then connect the docs server for the agent in question.
 
 ### Cursor
 
@@ -102,142 +90,98 @@ Then connect the MCP server for the agent in question.
 ```json
 {
   "mcpServers": {
-    "decisionnode": {
-      "url": "https://mcp.decisionnode.com",
-      "headers": { "Authorization": "Bearer ${env:DECISIONNODE_API_KEY}" }
-    }
+    "decisionnode-docs": { "url": "https://decisionnode.com/mcp" }
   }
 }
 ```
 
 ### VS Code (GitHub Copilot)
 
-`.vscode/mcp.json`. The key is asked for once and kept in VS Code's secret storage:
+`.vscode/mcp.json`:
 
 ```json
 {
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "decisionnode-key",
-      "description": "DecisionNode API key",
-      "password": true
-    }
-  ],
   "servers": {
-    "decisionnode": {
-      "type": "http",
-      "url": "https://mcp.decisionnode.com",
-      "headers": { "Authorization": "Bearer ${input:decisionnode-key}" }
-    }
+    "decisionnode-docs": { "type": "http", "url": "https://decisionnode.com/mcp" }
   }
 }
 ```
 
-### Windsurf
+### Claude Desktop and claude.ai
 
-`~/.codeium/windsurf/mcp_config.json`, with the local server:
+Add it as a custom connector: **Customize**, **Connectors**, **Add custom
+connector**, then paste `https://decisionnode.com/mcp` and choose no sign-in.
+
+> **User step.** Ask the user to add the connector themselves; it is a setting in
+> their account.
+
+### Windsurf, Zed and clients that only speak stdio
+
+Bridge to the server with `mcp-remote` (needs Node). For Windsurf in
+`~/.codeium/windsurf/mcp_config.json`, for Claude Desktop in
+`claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "decisionnode": {
-      "command": "uvx",
-      "args": ["bynn-decisionnode-mcp"],
-      "env": { "DECISIONNODE_API_KEY": "<key>" }
+    "decisionnode-docs": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://decisionnode.com/mcp"]
     }
   }
 }
 ```
 
-### Zed
-
-In Zed's `settings.json`, under `context_servers`:
+For Zed, the same command under `context_servers` in its `settings.json`:
 
 ```json
 {
   "context_servers": {
-    "decisionnode": {
+    "decisionnode-docs": {
       "source": "custom",
-      "command": "uvx",
-      "args": ["bynn-decisionnode-mcp"],
-      "env": { "DECISIONNODE_API_KEY": "<key>" }
-    }
-  }
-}
-```
-
-### Claude Desktop
-
-`claude_desktop_config.json` (Settings, Developer, Edit Config), with the local
-server:
-
-```json
-{
-  "mcpServers": {
-    "decisionnode": {
-      "command": "uvx",
-      "args": ["bynn-decisionnode-mcp"],
-      "env": { "DECISIONNODE_API_KEY": "<key>" }
-    }
-  }
-}
-```
-
-> **User step.** For Windsurf, Zed and Claude Desktop, ask the user to put their key in place
-> of `<key>` themselves, then restart the app.
-
-### Clients that only speak stdio
-
-Use the local server as above, or bridge to the hosted one:
-
-```json
-{
-  "mcpServers": {
-    "decisionnode": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.decisionnode.com", "--header", "Authorization:${AUTH_HEADER}"],
-      "env": { "AUTH_HEADER": "Bearer <key>" }
+      "args": ["-y", "mcp-remote", "https://decisionnode.com/mcp"]
     }
   }
 }
 ```
+
+> **User step.** Ask the user to restart the app after the change.
 
 ### Headless and CI
 
-Read the key from the CI secret store into `DECISIONNODE_API_KEY`, then:
-
 ```sh
-claude mcp add --transport http decisionnode https://mcp.decisionnode.com \
-  --header "Authorization: Bearer $DECISIONNODE_API_KEY"
+claude mcp add --transport http decisionnode-docs https://decisionnode.com/mcp
 ```
 
 or pass a config file to a single run:
 
 ```sh
 cat > mcp.json <<'EOF'
-{ "mcpServers": { "decisionnode": { "type": "http", "url": "https://mcp.decisionnode.com",
-  "headers": { "Authorization": "Bearer ${DECISIONNODE_API_KEY}" } } } }
+{ "mcpServers": { "decisionnode-docs": { "type": "http", "url": "https://decisionnode.com/mcp" } } }
 EOF
 claude -p "..." --mcp-config mcp.json
 ```
 
-For scripts with no agent at all, use the `dn` CLI or an SDK instead of MCP.
+For scripts with no agent at all, use the `dn` CLI or an SDK.
 
 ***
 
 ## Verify end to end
 
-1. Call `guide`. It makes no API call, so it proves the transport works.
-2. Call `models`. It is free and needs a valid key, so it proves the key reached
-   the API. An `authentication_error` here means the key is missing or wrong, or the
-   header never reached the server: check the variable and the client config, do not
-   retry blindly.
+1. Call `search_docs` with the query `boosters`. It needs no key, so it proves the
+   transport works; expect hits with a `path` each.
+2. Call `read_doc` with a `path` from a hit. Expect the page as Markdown.
+3. If the user has set `DECISIONNODE_API_KEY`, prove it reaches the API with the
+   free models list, printing only the status code:
+   `curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $DECISIONNODE_API_KEY" https://api.decisionnode.com/v1/models`.
+   Expect `200`. A `401` means the key is missing or wrong: check the variable, do
+   not retry blindly.
 
-These prove the MCP server only. Confirm the skill separately: on Claude Code with
-`claude plugin list`, elsewhere by checking that the `decisionnode` skill is listed
-by `npx skills list`. A connected server with no skill means the agent starts work
-without the guidance it needs.
+These prove the MCP server and the key only. Confirm the skill separately: on
+Claude Code with `claude plugin list`, elsewhere by checking that the
+`decisionnode` skill is listed by `npx skills list`. A connected server with no
+skill means the agent starts work without the guidance it needs.
 
 ***
 
@@ -248,7 +192,8 @@ Report only what you verified, one line per piece:
 ```
 DecisionNode setup
   [ok]     skill        decisionnode installed
-  [ok]     MCP server   connected, models answered
+  [ok]     docs server  connected, search_docs answered
+  [ok]     API key      models answered 200
   [action] reload       restart the agent to load the skill
 ```
 
@@ -262,7 +207,8 @@ failure, and follow every non-`[ok]` line with the exact next step.
 | Resource | URL |
 |---|---|
 | This repository | `https://github.com/Bynn-Intelligence/decision-node-skills` |
-| Documentation | `https://docs.decisionnode.com` |
+| Documentation | `https://decisionnode.com/docs` |
+| Docs for agents without MCP | `https://decisionnode.com/llms.txt` |
 | API | `https://api.decisionnode.com` |
-| Hosted MCP server | `https://mcp.decisionnode.com` |
+| Docs MCP server | `https://decisionnode.com/mcp` |
 | Agent Skills specification | `https://agentskills.io` |

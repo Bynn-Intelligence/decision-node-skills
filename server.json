@@ -1,10 +1,10 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.decisionnode/decisionnode",
-  "title": "DecisionNode",
-  "description": "Fast, calibrated yes-or-no, choice and score decisions for agents, with probabilities.",
-  "version": "0.1.0",
-  "websiteUrl": "https://docs.decisionnode.com",
+  "title": "DecisionNode docs",
+  "description": "Search and read the DecisionNode documentation: the API, question types, SDKs and CLI.",
+  "version": "0.2.0",
+  "websiteUrl": "https://decisionnode.com/docs",
   "repository": {
     "url": "https://github.com/Bynn-Intelligence/decision-node-skills",
     "source": "github"
@@ -12,15 +12,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcp.decisionnode.com",
-      "headers": [
-        {
-          "name": "Authorization",
-          "description": "Your DecisionNode API key, sent as: Bearer <key>",
-          "isRequired": true,
-          "isSecret": true
-        }
-      ]
+      "url": "https://decisionnode.com/mcp"
     }
   ]
 }

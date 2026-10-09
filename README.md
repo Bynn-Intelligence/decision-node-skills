@@ -1,10 +1,10 @@
 # DecisionNode Agent Skills
 
 The official [Agent Skill](https://agentskills.io) and Claude Code plugin for
-**DecisionNode**: fast, calibrated yes-or-no, choice and score decisions for
-applications and agents. It teaches a coding agent to integrate DecisionNode well,
-and connects the DecisionNode MCP server so the agent can ask DecisionNode while it
-works.
+**DecisionNode**: fast, calibrated yes-or-no, choice, score, number, point and box
+decisions for applications and agents. It teaches a coding agent to integrate
+DecisionNode well, and connects the DecisionNode docs MCP server so the agent can
+look up the current documentation while it works.
 
 Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Windsurf, Zed,
 and every other agent the `skills` CLI supports.
@@ -12,7 +12,7 @@ and every other agent the `skills` CLI supports.
 ## Onboard an agent in one shot
 
 Point any coding agent at [`agent-setup.md`](agent-setup.md) and it installs the
-skill and connects the MCP server itself:
+skill and connects the docs MCP server itself:
 
 ```
 Follow https://github.com/Bynn-Intelligence/decision-node-skills/blob/main/agent-setup.md
@@ -29,7 +29,7 @@ Any agent:
 npx skills add Bynn-Intelligence/decision-node-skills
 ```
 
-Claude Code, with the bundled MCP server:
+Claude Code, with the bundled docs MCP server:
 
 ```
 /plugin marketplace add Bynn-Intelligence/decision-node-skills
@@ -38,19 +38,20 @@ Claude Code, with the bundled MCP server:
 
 ## Set the key
 
-Everything reads one environment variable:
+The code the agent writes reads one environment variable:
 
 ```bash
 export DECISIONNODE_API_KEY=...
 ```
 
-Nothing in this repository ships or stores a key.
+Nothing in this repository ships or stores a key, and the docs MCP server needs
+none.
 
 ## What is in here
 
 | Skill | Covers |
 |---|---|
-| `decisionnode` | Choosing `truth`, `choice` or `score`; writing the state and the questions; reading probabilities and confidence; several questions in one `decide`; `decide_many`; images; errors and retries; the SDKs, the `dn` CLI and the MCP server. |
+| `decisionnode` | Choosing `truth`, `choice`, `score`, `number`, `point` or `box`; writing the state and the questions; reading probabilities and confidence; several questions in one `decide`; `decide_many`, batches and sessions; images and videos; boosters and their evidence; fine-tuned model names; errors and retries; the SDKs and the `dn` CLI. |
 
 A taste of what the agent learns to write:
 
@@ -72,31 +73,23 @@ d["route"].choice   # "billing"
 d["escalate"].truth # 0.94
 ```
 
-## Connect the MCP server
+## Connect the docs MCP server
 
-`npx skills add` copies skill files only. The Claude Code plugin registers the
-hosted server for you, sending `DECISIONNODE_API_KEY` as a bearer token. Elsewhere,
-connect it yourself:
+`npx skills add` copies skill files only. The Claude Code plugin registers the docs
+server for you. Elsewhere, connect it yourself:
 
 ```bash
-# hosted
-claude mcp add --transport http decisionnode https://mcp.decisionnode.com \
-  --header "Authorization: Bearer $DECISIONNODE_API_KEY"
-
-# local, over stdio
-claude mcp add decisionnode -e DECISIONNODE_API_KEY="$DECISIONNODE_API_KEY" -- uvx bynn-decisionnode-mcp
+claude mcp add --transport http decisionnode-docs https://decisionnode.com/mcp
 ```
 
-The hosted endpoint is the root path; do not append `/mcp`. Other clients are in
-[`agent-setup.md`](agent-setup.md).
+No key and no sign-in. Other clients are in [`agent-setup.md`](agent-setup.md).
+The server reads the documentation; it does not make decisions, which your code
+makes through the API, an SDK or the `dn` CLI.
 
 | Tool | Does |
 |---|---|
-| `guide` | How to use the other tools well. Free. |
-| `truth`, `choice`, `score` | One question of that type about a state |
-| `decide` | Several questions about one state, in one request |
-| `decide_many` | The same questions about many states |
-| `models` | The models the key may use. Free. |
+| `search_docs` | Searches every page and heading of the docs |
+| `read_doc` | Returns one page as Markdown |
 
 ## Configuration
 
@@ -119,7 +112,7 @@ skill's front matter and `server.json` must agree; bump them together.
 
 ## Documentation
 
-`https://docs.decisionnode.com`
+`https://decisionnode.com/docs`
 
 ## License
 

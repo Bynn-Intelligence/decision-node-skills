@@ -133,15 +133,15 @@ is an `OverloadedError`, retried as every 529.
 
 `decide`, the helpers, `decide_many`'s requests and batch lines take `fallback`
 (a boolean), sent only when given. `decision.fallback` is empty on an ordinary
-answer, and holds `served_model` and `requested_model` when `decisionnode-1.0`
-was answered by `decisionnode-1.0-flash` because no worker of it was ready;
+answer, and holds `served_model` and `requested_model` (pinned ids) when a
+`decisionnode-moe` request was answered by Flash because no worker of it was ready;
 `decision.model` is the model that answered. With `fallback=False` such a
 request is a 529, an `OverloadedError` retried like any 529.
 
 ## Fine-tuned models
 
-`model` is free text: a fine-tuned model's name (`decisionnode-1.0-flash@acme/fraud`
-or the pinned `decisionnode-1.0-flash@acme/fraud:3`) is sent as given and never
+`model` is free text: a fine-tuned model's name (`decisionnode-flash@acme/fraud`
+or the pinned `decisionnode-flash@acme/fraud:3`) is sent as given and never
 checked locally, on a call or as the client's `model`. `decision.model` is the
 pinned name the server answered with. An unknown or another workspace's name is the
 server's 400 `Unknown model: <name>`, a `BadRequestError`. `models()` entries carry

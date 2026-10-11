@@ -4,7 +4,7 @@
 
 ```json
 {
-  "model": "decisionnode-latest",
+  "model": "decisionnode-moe",
   "state": { "ticket": "I was charged twice and nobody has replied for 3 days." },
   "questions": {
     "route": {
@@ -28,13 +28,13 @@
 
 | Field | Notes |
 |---|---|
-| `model` | Optional. Defaults to `decisionnode-latest`. A pinned version (`decisionnode-1.0`), or a fine-tuned model of the key's workspace (below). |
+| `model` | Optional. Defaults to `decisionnode-moe`. A family id (`decisionnode-moe`, `decisionnode-flash`: the current release), a pinned id from `GET /v1/models` (`decisionnode-<family>-<version>`), or a fine-tuned model of the key's workspace (below). The older ids `decisionnode-1.0`, `decisionnode-1.0-flash`, `decisionnode-latest` and `decisionnode-flash-latest` are still accepted. |
 | `state` | A string, object or array. Objects are read with their keys. Left out or `""` when there is nothing to evaluate. |
 | `questions` | A map of id to question, at least one. Any mix of types. The token limit of the model is the only bound on the count. |
 | `images` | Optional, up to 16. See below. |
 | `videos` | Optional, up to 4, sent as frames. See below. |
 | `boosters` | Optional, up to 4. See below. |
-| `fallback` | Optional, default `true`: a request for `decisionnode-1.0` that no ready worker can take at once is answered by `decisionnode-1.0-flash`, with `x-decisionnode-fallback` and `x-decisionnode-requested-model` naming the two. `false`: the 529 with `Retry-After` instead. Live `decide` only. |
+| `fallback` | Optional, default `true`: a request for `decisionnode-moe` that no ready worker can take at once is answered by `decisionnode-flash`, with `x-decisionnode-fallback` and `x-decisionnode-requested-model` naming the two. `false`: the 529 with `Retry-After` instead. Live `decide` only. |
 
 A field sent as `null` equals a field left out.
 
@@ -78,7 +78,7 @@ Option names come back byte for byte as sent: no trimming, no case folding.
 
 ```json
 {
-  "model": "decisionnode-1.0",
+  "model": "decisionnode-moe-<version>",
   "answers": {
     "route": { "type": "choice", "choice": "billing", "confidence": 0.81,
                "probabilities": { "account": 0.05, "billing": 0.87, "bug": 0.08 } },
@@ -100,7 +100,7 @@ Option names come back byte for byte as sent: no trimming, no case folding.
 | `confidence` | Choice and score: 0 means no better than a uniform guess, 1 means certain. Number: the probability of `number`. |
 | `probabilities` | Every option or level, zeros included, keyed by option name or by level index as a string. A number's lists the values above 0.001, keyed by the value as a string (`"7"`, `"3.5"`). |
 | `legend` | Level index to the level exactly as sent |
-| `model` | The resolved model version that answered |
+| `model` | The pinned id of the version that answered, `decisionnode-<family>-<version>` |
 
 Point and box answers:
 
@@ -184,7 +184,7 @@ frames or a lower resolution than sent, `warnings`.
 
 ```json
 {
-  "model": "decisionnode-1.0",
+  "model": "decisionnode-moe-<version>",
   "images": [
     { "id": "person", "upload_id": "upl_..." },
     { "id": "poster", "url": "https://files.example.com/poster.jpg" }
@@ -221,7 +221,7 @@ The response:
 
 ```json
 {
-  "model": "decisionnode-1.0",
+  "model": "decisionnode-moe-<version>",
   "answers": {
     "adult": { "type": "truth", "truth": 0.97 },
     "synthetic": { "type": "truth", "truth": 0.91 }
@@ -274,8 +274,9 @@ labelled, and is called by the keys of that workspace only:
 <base>@<workspace-slug>/<name>:<n>    version n
 ```
 
-`<base>` is `decisionnode-1.0` or `decisionnode-1.0-flash`, for example
-`decisionnode-1.0-flash@acme/fraud:3`. It answers like its base: the same question
+`<base>` is a family id, `decisionnode-moe` or `decisionnode-flash` (the older
+`decisionnode-1.0` and `decisionnode-1.0-flash` are still accepted), for example
+`decisionnode-flash@acme/fraud:3`. It answers like its base: the same question
 types, answer shapes, limits and errors. The response's `model` and
 `x-decisionnode-model` carry the pinned name. A name that does not exist, a version
 that is not deployed and another workspace's model are all the 400

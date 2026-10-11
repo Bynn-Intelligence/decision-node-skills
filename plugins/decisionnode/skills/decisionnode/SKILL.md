@@ -17,7 +17,7 @@ allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
   author: bynn
-  version: "0.2.8"
+  version: "0.2.9"
 license: MIT
 ---
 
@@ -189,24 +189,29 @@ unencrypted or unexpected connection. Full table:
 
 ## Models
 
-`decisionnode-latest` is the default. `decisionnode-flash-latest` is faster and
-cheaper. Pin a version (`decisionnode-1.0`, `decisionnode-1.0-flash`) when answers
-must not move under you. Each model's limits (tokens per request, images and more)
-are published at `GET /v1/models`; check them there instead of hard-coding them.
+`decisionnode-moe` is the default and the most accurate; `decisionnode-flash` is
+faster and cheaper. Both always mean the current release. Every answer names the
+pinned id of the version that answered, `decisionnode-<family>-<version>`, in the
+body's `model`; log it. To pin a version so answers do not move under you, send a
+pinned id taken from `GET /v1/models`, never one written from memory: versions
+change with releases. Each model's limits (tokens per request, images and more)
+are published there too; check them instead of hard-coding them. The older ids
+`decisionnode-1.0`, `decisionnode-1.0-flash`, `decisionnode-latest` and
+`decisionnode-flash-latest` are still accepted; use the family ids in new code.
 
-When `decisionnode-1.0` has no worker ready at once, the API answers from
-`decisionnode-1.0-flash` instead of making you wait: the body's `model` is the
+When `decisionnode-moe` has no worker ready at once, the API answers from
+`decisionnode-flash` instead of making you wait: the body's `model` is the
 model that answered, and the headers `x-decisionnode-fallback` and
 `x-decisionnode-requested-model` name the two (`decision.fallback` in the SDKs).
 It is billed at Flash's price. Send `"fallback": false` (the SDKs' `fallback`
 option) to get the 529 with `Retry-After` instead; the SDKs retry it. Only live
-`decide` calls for `decisionnode-1.0` fall back: Flash, fine-tuned models,
+`decide` calls for `decisionnode-moe` fall back: Flash, fine-tuned models,
 sessions and batch lines never do.
 
 A workspace can train a **fine-tuned model** on decisions it has labelled, in the
 console. Call it by name in `model`, with a key of that workspace:
-`decisionnode-1.0-flash@acme/fraud` (the version deployed now) or
-`decisionnode-1.0-flash@acme/fraud:3` (a pinned version). The response's `model`
+`decisionnode-flash@acme/fraud` (the version deployed now) or
+`decisionnode-flash@acme/fraud:3` (a pinned version). The response's `model`
 is always the pinned name, so you can log which version answered. Another
 workspace's model, or a version that is not deployed, is the 400
 `Unknown model: <name>`. `GET /v1/models` lists the workspace's fine-tuned models
@@ -230,7 +235,7 @@ Configuration is the same everywhere:
 |---|---|---|
 | API key | `DECISIONNODE_API_KEY` | none |
 | Base URL | `DECISIONNODE_BASE_URL` | `https://api.decisionnode.com` |
-| Model | `DECISIONNODE_MODEL` | `decisionnode-latest` |
+| Model | `DECISIONNODE_MODEL` | `decisionnode-moe` |
 
 An explicit argument or flag wins over the environment, which wins over the default.
 

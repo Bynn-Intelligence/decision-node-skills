@@ -97,7 +97,7 @@ makes through the API, an SDK or the `dn` CLI.
 |---|---|---|
 | API key | `DECISIONNODE_API_KEY` | none |
 | Base URL | `DECISIONNODE_BASE_URL` | `https://api.decisionnode.com` |
-| Model | `DECISIONNODE_MODEL` | `decisionnode-latest` |
+| Model | `DECISIONNODE_MODEL` | `decisionnode-moe` |
 
 ## Development
 

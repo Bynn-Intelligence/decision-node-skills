@@ -61,7 +61,7 @@ Boosters: `--booster NAME`, repeatable, in order; `--booster NAME:required` sets
 left out. `boosters` in a request file of `dn decide` or a batch line works too.
 The answer is printed first, then the `evidence`.
 
-Models: `-m decisionnode-1.0-flash@acme/fraud` (a fine-tuned model of the key's
+Models: `-m decisionnode-flash@acme/fraud` (a fine-tuned model of the key's
 workspace) is sent as given. `dn models` shows `fine_tuned`, `base`,
 `adapter_version` and `status` for the workspace's fine-tuned models.
 

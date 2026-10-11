@@ -34,7 +34,7 @@
 | `images` | Optional, up to 16. See below. |
 | `videos` | Optional, up to 4, sent as frames. See below. |
 | `boosters` | Optional, up to 4. See below. |
-| `fallback` | Optional, default `true`: a request for `decisionnode-moe` that no ready worker can take at once is answered by `decisionnode-flash`, with `x-decisionnode-fallback` and `x-decisionnode-requested-model` naming the two. `false`: the 529 with `Retry-After` instead. Live `decide` only. |
+| `fallback` | Optional, default `true`: a request for `decisionnode-moe` that no ready worker can take at once is answered by `decisionnode-flash`, with `x-decisionnode-fallback` and `x-decisionnode-requested-model` naming the two. `false`: the 529 with `Retry-After` instead. Live `decide` only; a pinned id never falls back. |
 
 A field sent as `null` equals a field left out.
 
@@ -286,7 +286,7 @@ that is not deployed and another workspace's model are all the 400
 `{"detail": {"error_type": "api_usage_error", "message": "Unknown model: <name>"}}`.
 `GET /v1/models` lists the workspace's deployed and ready versions under their
 pinned names, and the plain name of each model with a deployed version, each with
-`fine_tuned: true`, `base`, `adapter_version` and `status` (`deployed` or `ready`;
+`fine_tuned: true`, `base`, `family` (`decisionnode-moe` or `decisionnode-flash`), `adapter_version` and `status` (`deployed` or `ready`;
 only `deployed` answers decisions). A fine-tuned model is billed at its base's
 price per input token plus a premium; the current prices are on
 `https://decisionnode.com/docs/pricing`.

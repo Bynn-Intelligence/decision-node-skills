@@ -196,8 +196,10 @@ faster and cheaper. Both always mean the current release. Every answer names the
 pinned id of the version that answered, `decisionnode-<family>-<version>`, in the
 body's `model`; log it. To pin a version so answers do not move under you, send a
 pinned id taken from `GET /v1/models`, never one written from memory: versions
-change with releases. Each model's limits (tokens per request, images and more)
-are published there too; check them instead of hard-coding them. The older ids
+change with releases. There each family's entry names its current pinned id in
+`version`, and each pinned id served has an entry of its own. Each model's limits
+(tokens per request, images and more) are published there too; check them instead
+of hard-coding them. The older ids
 `decisionnode-1.0`, `decisionnode-1.0-flash`, `decisionnode-latest` and
 `decisionnode-flash-latest` are still accepted; use the family ids in new code.
 
@@ -207,8 +209,8 @@ model that answered, and the headers `x-decisionnode-fallback` and
 `x-decisionnode-requested-model` name the two (`decision.fallback` in the SDKs).
 It is billed at Flash's price. Send `"fallback": false` (the SDKs' `fallback`
 option) to get the 529 with `Retry-After` instead; the SDKs retry it. Only live
-`decide` calls for `decisionnode-moe` fall back: Flash, fine-tuned models,
-sessions and batch lines never do.
+`decide` calls for `decisionnode-moe` fall back: Flash, a pinned id, fine-tuned
+models, sessions and batch lines never do.
 
 A workspace can train a **fine-tuned model** on decisions it has labelled, in the
 console. Call it by name in `model`, with a key of that workspace:

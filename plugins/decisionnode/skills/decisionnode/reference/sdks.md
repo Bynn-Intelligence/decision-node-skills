@@ -133,7 +133,8 @@ is an `OverloadedError`, retried as every 529.
 
 `decide`, the helpers, `decide_many`'s requests and batch lines take `fallback`
 (a boolean), sent only when given. `decision.fallback` is empty on an ordinary
-answer, and holds `served_model` and `requested_model` (pinned ids) when a
+answer, and holds `served_model` (the pinned id that answered) and
+`requested_model` (what was asked: the family id, or the pinned id if one was sent) when a
 `decisionnode-moe` request was answered by Flash because no worker of it was ready;
 `decision.model` is the model that answered. With `fallback=False` such a
 request is a 529, an `OverloadedError` retried like any 529.

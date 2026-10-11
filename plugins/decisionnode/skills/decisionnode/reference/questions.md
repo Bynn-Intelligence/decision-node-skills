@@ -87,7 +87,8 @@ Option names come back byte for byte as sent: no trimming, no case folding.
                  "probabilities": { "0": 0.01, "1": 0.09, "2": 0.48, "3": 0.42 } },
     "escalate": { "type": "truth", "truth": 0.94 }
   },
-  "usage": { "input_tokens": 62, "output_tokens": 0 }
+  "usage": { "input_tokens": 62, "output_tokens": 0,
+             "cost": { "usd": 0.000002604, "model_usd": 0.000002604, "boosters_usd": 0, "free_tier": false } }
 }
 ```
 
@@ -101,6 +102,7 @@ Option names come back byte for byte as sent: no trimming, no case folding.
 | `probabilities` | Every option or level, zeros included, keyed by option name or by level index as a string. A number's lists the values above 0.001, keyed by the value as a string (`"7"`, `"3.5"`). |
 | `legend` | Level index to the level exactly as sent |
 | `model` | The pinned id of the version that answered, `decisionnode-<family>-<version>` |
+| `usage.cost` | What the answer cost in USD: `usd` (the amount booked), split into `model_usd` and `boosters_usd`, and `free_tier` (`true` when the free tier covered the model's part, which is then 0). Amounts have up to 9 decimals. A refused or unbilled answer carries zeros. Read `usd` as sent; do not add the parts yourself. The amounts in these examples are examples, not prices. |
 
 Point and box answers:
 
@@ -242,7 +244,8 @@ The response:
       ]
     }
   },
-  "usage": { "input_tokens": 341, "output_tokens": 0, "booster_tokens": 72, "boosters": 3 }
+  "usage": { "input_tokens": 341, "output_tokens": 0, "booster_tokens": 72, "boosters": 3,
+             "cost": { "usd": 0.036014322, "model_usd": 0.000014322, "boosters_usd": 0.036, "free_tier": false } }
 }
 ```
 

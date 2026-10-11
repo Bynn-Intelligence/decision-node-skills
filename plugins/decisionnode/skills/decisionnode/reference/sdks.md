@@ -70,7 +70,8 @@ A `Decision` has `answers` (by question id, also `decision[id]`), `model`,
 `usage.input_tokens`, `usage.output_tokens`, `request_id`, `latency_ms`, `safety`
 and `raw`; with videos also `usage.video_frames`, `usage.video_seconds` and
 `warnings`; with boosters also `evidence`, `usage.booster_tokens` and
-`usage.boosters`. A value the response does not carry is the language's empty value
+`usage.boosters`; and `usage.cost` (`usd`, `model_usd`, `boosters_usd`,
+`free_tier`), what the answer cost, read as the server sent it. A value the response does not carry is the language's empty value
 (`None`, `null`, `nil`), never 0.
 
 Each answer is a `TruthAnswer`, `ChoiceAnswer`, `ScoreAnswer`, `NumberAnswer`,

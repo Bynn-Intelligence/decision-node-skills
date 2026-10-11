@@ -104,6 +104,8 @@ Details and patterns: [reference/questions.md](reference/questions.md).
 - Use the values as received. A list may sum to 0.99 or 1.01 and an entry may
   print as `0.8200000000000001`. Do not round or renormalise before comparing.
 - The same request to the same pinned model returns the same answer.
+- `usage.cost` says what the answer cost in USD: `usd`, split into `model_usd` and
+  `boosters_usd`, and `free_tier`. Log it as sent; do not recompute it.
 
 ## Several questions, many states
 

@@ -1,0 +1,166 @@
+# Publish server.json to the MCP registry.
+#
+# On every push to main the dry-run job proves the path without publishing: the
+# manifests agree on one version, server.json matches the registry schema, the
+# published files hold no internal reference, and the pinned mcp-publisher
+# download matches its checksum. A v* tag runs the dry-run again, then the
+# publish job.
+#
+# The publish job runs in the GitHub environment "release", which must require a
+# reviewer (Settings > Environments > release > Required reviewers) and be limited
+# to v* tags, so nothing is published without a person approving it.
+#
+# Names the owner sets up; none exists yet:
+#   environment  release
+#   secret       MCP_REGISTRY_PRIVATE_KEY, in the environment: the hex Ed25519
+#                private key whose public key is published as a TXT record at the
+#                apex of decisionnode.com: "v=MCPv1; k=ed25519; p=<base64 key>".
+#                It proves the namespace com.decisionnode/* to the registry.
+#
+# The plugin itself is not uploaded anywhere: clients read it from this repository.
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+env:
+  MCP_PUBLISHER_VERSION: v1.8.1
+  MCP_PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Validate the manifests and check every version agrees
+        run: |
+          python3 hooks/validate_manifests.py
+          python3 hooks/check_versions.py
+
+      - name: The tag names the manifests' version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version=$(python3 -c "import json;print(json.load(open('server.json'))['version'])")
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not name the manifests' version ${version}"
+            exit 1
+          fi
+
+      - name: Validate server.json against the MCP registry schema
+        run: |
+          set -euo pipefail
+          pip install --quiet jsonschema==4.26.0
+          schema_url=$(python3 -c "import json;print(json.load(open('server.json'))['\$schema'])")
+          curl -fsSL "$schema_url" -o /tmp/server.schema.json
+          python3 - <<'EOF'
+          import json, sys
+          import jsonschema
+          schema = json.load(open("/tmp/server.schema.json"))
+          data = json.load(open("server.json"))
+          errors = list(jsonschema.validators.validator_for(schema)(schema).iter_errors(data))
+          for e in errors:
+              print(f"::error::server.json {list(e.path)}: {e.message}")
+          sys.exit(1 if errors else 0)
+          EOF
+
+      - name: No internal reference in the published files
+        shell: bash
+        run: |
+          pattern='docs/[0-9]{2}|backend/[0-9]{2}|products/|/Users/|co-authored-by|generated with|face_detection|wanted_person'
+          if git grep -n -i -E "$pattern" -- . ':!.github/workflows/release.yml'; then
+            echo "::error::the lines above must not be published"
+            exit 1
+          fi
+
+      # Names that must never be published, kept here only as the SHA-256 of each
+      # lowercase word, so this file does not name them.
+      - name: No internal name in the published files
+        shell: python
+        run: |
+          import hashlib, re, subprocess, sys
+          names = {
+              "9e9b2efac0b62e4cf6f08cc6b7095e6ad7e18c447458c5849accb698f7149ef3",
+              "934a11e602682e862b4b4d1f881ae8da1e097e3f6964bd780e5bb1fb798a6fdd",
+              "b7933ed6180d9e2895a9d2df885e2a8b92e998a3c16297581f5b8698daacf492",
+              "31d1b3d540ecf85228db7797efbe7d198ec5406abd3f6e64f27f684e9a312d29",
+              "2e0b8d61fa2a6959d254b6ff5d0fb512249329097336a35568089933b49abdde",
+          }
+          found = 0
+          for path in subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True).stdout.split():
+              try:
+                  text = open(path, encoding="utf-8").read().lower()
+              except (UnicodeDecodeError, IsADirectoryError):
+                  continue
+              for n, line in enumerate(text.splitlines(), 1):
+                  if any(hashlib.sha256(w.encode()).hexdigest() in names for w in re.findall(r"[a-z0-9]+", line)):
+                      print(f"::error file={path},line={n}::an internal name must not be published")
+                      found += 1
+          sys.exit(1 if found else 0)
+
+      - name: Download mcp-publisher and check its checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  /tmp/mcp-publisher.tar.gz" | sha256sum --check --strict
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: dry-run
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Only a commit already on main is published.
+      - name: Check that the tag is on main
+        shell: bash
+        run: |
+          tagged="$(git rev-parse "${GITHUB_REF}^{commit}")"
+          if ! git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null; then
+            echo "::error::origin/main was not fetched; cannot check the tag"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$tagged" refs/remotes/origin/main; then
+            echo "::error::${GITHUB_REF_NAME} points at $tagged, which is not on main"
+            exit 1
+          fi
+          echo "${GITHUB_REF_NAME} ($tagged) is on main"
+
+      - name: Install mcp-publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/mcp-publisher.tar.gz \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  /tmp/mcp-publisher.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/mcp-publisher.tar.gz -C /tmp mcp-publisher
+
+      - name: Publish server.json
+        shell: bash
+        env:
+          MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MCP_REGISTRY_PRIVATE_KEY}" ]; then
+            echo "::error::the release environment has no MCP_REGISTRY_PRIVATE_KEY"
+            exit 1
+          fi
+          /tmp/mcp-publisher login dns --domain decisionnode.com --private-key "${MCP_REGISTRY_PRIVATE_KEY}"
+          /tmp/mcp-publisher publish

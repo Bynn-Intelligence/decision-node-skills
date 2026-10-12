@@ -78,7 +78,7 @@ jobs:
       - name: No internal reference in the published files
         shell: bash
         run: |
-          pattern='docs/[0-9]{2}|backend/[0-9]{2}|products/|/Users/|co-authored-by|generated with|face_detection|wanted_person'
+          pattern='docs/[0-9]{2}|backend/[0-9]{2}|products/|/Users/|co-authored-by|generated with|face_detection|face_recognition|wanted_person'
           if git grep -n -i -E "$pattern" -- . ':!.github/workflows/release.yml'; then
             echo "::error::the lines above must not be published"
             exit 1

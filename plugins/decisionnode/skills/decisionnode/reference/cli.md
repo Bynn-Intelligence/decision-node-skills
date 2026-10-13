@@ -10,7 +10,7 @@ example an oh-my-zsh alias for `dotnet new`).
 ```sh
 curl -fsSL https://decisionnode.com/install.sh | sh     # macOS, Linux
 brew install bynn-intelligence/bynn/dn                  # Homebrew
-npm install -g @bynn/dn                                 # or: npx -y @bynn/dn <command>
+npm install -g @decisionnode/cli                        # or: npx -y @decisionnode/cli <command>
 scoop bucket add bynn https://github.com/Bynn-Intelligence/scoop-bynn && scoop install dn
 ```
 

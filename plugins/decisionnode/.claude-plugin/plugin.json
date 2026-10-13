@@ -1,7 +1,7 @@
 {
   "name": "decisionnode",
   "version": "0.2.9",
-  "description": "Integrate DecisionNode: pick truth, choice, score, number, point or box, write the state and the questions, read probabilities and confidence, batch with decide, decide_many and the Batch API, send images and videos, add boosters, call fine-tuned models, handle errors and retries, and use the SDKs and the dn CLI. Bundles the DecisionNode docs MCP server.",
+  "description": "Integrate DecisionNode, the decision engine: pick truth, choice, score, number, point or box, write the state and the questions, read probabilities and confidence, batch with decide, decide_many and the Batch API, send images and videos, add boosters, call fine-tuned models, handle errors and retries, and use the SDKs and the dn CLI. Bundles the DecisionNode docs MCP server.",
   "license": "MIT",
   "author": {
     "name": "Bynn Intelligence",
@@ -11,6 +11,7 @@
   "repository": "https://github.com/Bynn-Intelligence/decision-node-skills",
   "keywords": [
     "decisionnode",
+    "decision-engine",
     "classification",
     "decision",
     "probability",

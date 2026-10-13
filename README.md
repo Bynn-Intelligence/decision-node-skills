@@ -1,5 +1,7 @@
 # DecisionNode Agent Skills
 
+[DecisionNode](https://decisionnode.com) is a decision engine: send it text, JSON or images with a question, and it answers with calibrated probabilities.
+
 The official [Agent Skill](https://agentskills.io) and Claude Code plugin for
 **DecisionNode**: fast, calibrated yes-or-no, choice, score, number, point and box
 decisions for applications and agents. It teaches a coding agent to integrate

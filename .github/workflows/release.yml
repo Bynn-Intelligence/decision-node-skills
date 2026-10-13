@@ -2,9 +2,9 @@
 #
 # On every push to main the dry-run job proves the path without publishing: the
 # manifests agree on one version, server.json matches the registry schema, the
-# published files hold no internal reference, and the pinned mcp-publisher
-# download matches its checksum. A v* tag runs the dry-run again, then the
-# publish job.
+# published files and the commit messages since the last tag hold no internal
+# reference, and the pinned mcp-publisher download matches its checksum. A v*
+# tag runs the dry-run again, then the publish job.
 #
 # The publish job runs in the GitHub environment "release", which must require a
 # reviewer (Settings > Environments > release > Required reviewers) and be limited
@@ -16,6 +16,8 @@
 #                private key whose public key is published as a TXT record at the
 #                apex of decisionnode.com: "v=MCPv1; k=ed25519; p=<base64 key>".
 #                It proves the namespace com.decisionnode/* to the registry.
+#   secret       DN_NAME_CHECK_WORDS, an organisation secret: the internal names,
+#                one lowercase word or phrase a line. Without it the dry run fails.
 #
 # The plugin itself is not uploaded anywhere: clients read it from this repository.
 name: release
@@ -38,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -75,39 +78,14 @@ jobs:
           sys.exit(1 if errors else 0)
           EOF
 
+      # Every tracked file is published: clients read the plugin from this
+      # repository. Internal names, internal paths, attribution lines and the
+      # boosters production does not serve yet, in any file or commit message
+      # since the last tag; a hit prints the file and line, never the text.
       - name: No internal reference in the published files
-        shell: bash
-        run: |
-          pattern='docs/[0-9]{2}|backend/[0-9]{2}|products/|/Users/|co-authored-by|generated with|face_detection|face_recognition|wanted_person'
-          if git grep -n -i -E "$pattern" -- . ':!.github/workflows/release.yml'; then
-            echo "::error::the lines above must not be published"
-            exit 1
-          fi
-
-      # Names that must never be published, kept here only as the SHA-256 of each
-      # lowercase word, so this file does not name them.
-      - name: No internal name in the published files
-        shell: python
-        run: |
-          import hashlib, re, subprocess, sys
-          names = {
-              "9e9b2efac0b62e4cf6f08cc6b7095e6ad7e18c447458c5849accb698f7149ef3",
-              "934a11e602682e862b4b4d1f881ae8da1e097e3f6964bd780e5bb1fb798a6fdd",
-              "b7933ed6180d9e2895a9d2df885e2a8b92e998a3c16297581f5b8698daacf492",
-              "31d1b3d540ecf85228db7797efbe7d198ec5406abd3f6e64f27f684e9a312d29",
-              "2e0b8d61fa2a6959d254b6ff5d0fb512249329097336a35568089933b49abdde",
-          }
-          found = 0
-          for path in subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True).stdout.split():
-              try:
-                  text = open(path, encoding="utf-8").read().lower()
-              except (UnicodeDecodeError, IsADirectoryError):
-                  continue
-              for n, line in enumerate(text.splitlines(), 1):
-                  if any(hashlib.sha256(w.encode()).hexdigest() in names for w in re.findall(r"[a-z0-9]+", line)):
-                      print(f"::error file={path},line={n}::an internal name must not be published")
-                      found += 1
-          sys.exit(1 if found else 0)
+        env:
+          DN_NAME_CHECK_WORDS: ${{ secrets.DN_NAME_CHECK_WORDS }}
+        run: python3 .github/scripts/check_names.py --tracked --commits --unserved-everywhere
 
       - name: Download mcp-publisher and check its checksum
         shell: bash
@@ -152,7 +130,11 @@ jobs:
           echo "${MCP_PUBLISHER_SHA256}  /tmp/mcp-publisher.tar.gz" | sha256sum --check --strict
           tar -xzf /tmp/mcp-publisher.tar.gz -C /tmp mcp-publisher
 
-      - name: Publish server.json
+      # mcp-publisher takes the key only on its command line, where every
+      # process on the runner can read it. registry_login.py does the same DNS
+      # sign-in with the key from the environment, signing through a mode 0600
+      # file, and saves the token where mcp-publisher publish reads it.
+      - name: Sign in to the registry
         shell: bash
         env:
           MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
@@ -162,5 +144,7 @@ jobs:
             echo "::error::the release environment has no MCP_REGISTRY_PRIVATE_KEY"
             exit 1
           fi
-          /tmp/mcp-publisher login dns --domain decisionnode.com --private-key "${MCP_REGISTRY_PRIVATE_KEY}"
-          /tmp/mcp-publisher publish
+          python3 .github/scripts/registry_login.py --domain decisionnode.com
+
+      - name: Publish server.json
+        run: /tmp/mcp-publisher publish

@@ -31,6 +31,9 @@ jobs:
       - name: Validate skill front matter and links
         run: python3 hooks/check_skills.py
 
+      - name: Test the release name check
+        run: python3 .github/scripts/test_check_names.py
+
       - name: Validate server.json against the MCP registry schema
         run: |
           set -euo pipefail

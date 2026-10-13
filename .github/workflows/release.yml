@@ -1,17 +1,22 @@
-# Publish server.json to the MCP registry.
+# Release on every push to main: bump the patch in every manifest, push the
+# bump commit and its v* tag back to main, and publish server.json to the MCP
+# registry. Runs only while the repository is public; a commit whose message
+# contains [skip publish] releases nothing, and the bump commit carries it, so
+# the push back (made with the default GITHUB_TOKEN, which triggers no workflow
+# anyway) never releases again.
 #
-# On every push to main the dry-run job proves the path without publishing: the
+# The dry-run job runs first on every push to main, public or not: the
 # manifests agree on one version, server.json matches the registry schema, the
 # published files and the commit messages since the last tag hold no internal
-# reference, and the pinned mcp-publisher download matches its checksum. A v*
-# tag runs the dry-run again, then the publish job.
+# reference, and the pinned mcp-publisher download matches its checksum. The
+# publish job runs only when it passes.
 #
-# The publish job runs in the GitHub environment "release", which must require a
-# reviewer (Settings > Environments > release > Required reviewers) and be limited
-# to v* tags, so nothing is published without a person approving it.
+# The publish job runs in the GitHub environment "release", which holds the
+# registry key and is limited to the main branch (Settings > Environments >
+# release > Deployment branches). It needs no reviewer.
 #
-# Names the owner sets up; none exists yet:
-#   environment  release
+# Names the owner sets up:
+#   environment  release, limited to main
 #   secret       MCP_REGISTRY_PRIVATE_KEY, in the environment: the hex Ed25519
 #                private key whose public key is published as a TXT record at the
 #                apex of decisionnode.com: "v=MCPv1; k=ed25519; p=<base64 key>".
@@ -25,7 +30,11 @@ name: release
 on:
   push:
     branches: [main]
-    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -50,16 +59,6 @@ jobs:
         run: |
           python3 hooks/validate_manifests.py
           python3 hooks/check_versions.py
-
-      - name: The tag names the manifests' version
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          version=$(python3 -c "import json;print(json.load(open('server.json'))['version'])")
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
-            echo "::error::tag ${GITHUB_REF_NAME} does not name the manifests' version ${version}"
-            exit 1
-          fi
 
       - name: Validate server.json against the MCP registry schema
         run: |
@@ -96,30 +95,47 @@ jobs:
           echo "${MCP_PUBLISHER_SHA256}  /tmp/mcp-publisher.tar.gz" | sha256sum --check --strict
 
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: "github.event.repository.visibility == 'public' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message || '', '[skip publish]')"
     needs: dry-run
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      # Only a commit already on main is published.
-      - name: Check that the tag is on main
+      - id: bump
         shell: bash
         run: |
-          tagged="$(git rev-parse "${GITHUB_REF}^{commit}")"
-          if ! git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null; then
-            echo "::error::origin/main was not fetched; cannot check the tag"
-            exit 1
-          fi
-          if ! git merge-base --is-ancestor "$tagged" refs/remotes/origin/main; then
-            echo "::error::${GITHUB_REF_NAME} points at $tagged, which is not on main"
-            exit 1
-          fi
-          echo "${GITHUB_REF_NAME} ($tagged) is on main"
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          NEW=$(python3 .github/scripts/bump_version.py)
+          python3 hooks/validate_manifests.py
+          python3 hooks/check_versions.py
+          git add .claude-plugin/marketplace.json server.json plugins/*/.claude-plugin/plugin.json plugins/*/skills/*/SKILL.md
+          git commit -m "Release v${NEW} [skip publish]"
+          git tag "v${NEW}"
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+
+      # The token reaches git as configuration in the environment, never on a
+      # command line or on disk. A push that is not a fast-forward (main moved
+      # meanwhile) fails here, before anything is published.
+      - name: Push the bump commit and the tag to main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+          GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w0)"
+          export GIT_CONFIG_VALUE_0
+          git push "https://github.com/${GITHUB_REPOSITORY}.git" HEAD:main "v${VERSION}"
 
       - name: Install mcp-publisher
         shell: bash

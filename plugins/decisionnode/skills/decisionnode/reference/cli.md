@@ -8,11 +8,15 @@ example an oh-my-zsh alias for `dotnet new`).
 ## Install
 
 ```sh
-curl -fsSL https://decisionnode.com/install.sh | sh     # macOS, Linux
-brew install bynn-intelligence/bynn/dn                  # Homebrew
-npm install -g @decisionnode/cli                        # or: npx -y @decisionnode/cli <command>
+# macOS and Linux: the install script, to ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/Bynn-Intelligence/decision-node-cli/main/install.sh | sh
+# Homebrew (macOS and Linux)
+brew install bynn-intelligence/bynn/dn
+# Scoop (Windows)
 scoop bucket add bynn https://github.com/Bynn-Intelligence/scoop-bynn && scoop install dn
 ```
+
+Direct download: every [release](https://github.com/Bynn-Intelligence/decision-node-cli/releases/latest) has an archive for macOS (arm64, x86-64), Linux (arm64, x86-64, static) and Windows (x86-64, arm64), `.deb` and `.rpm` packages, `checksums.txt`, and a signature of the checksums. For the install script, set `DN_INSTALL_DIR` to install elsewhere, or `DN_VERSION` (for example `v0.1.0`) to pin a version.
 
 ## Sign in
 

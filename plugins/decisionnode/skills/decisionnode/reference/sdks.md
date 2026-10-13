@@ -11,7 +11,7 @@ page describes specification 1.3: boosters and fine-tuned model names.
 | Language | Install | Import |
 |---|---|---|
 | Python 3.10+ | `pip install bynn-decisionnode` or `uv add bynn-decisionnode` | `decisionnode` |
-| TypeScript, JavaScript (Node 20+, Deno, Bun, edge) | `npm install @bynn/decisionnode` | `@bynn/decisionnode` |
+| TypeScript, JavaScript (Node 20+, Deno, Bun, edge) | `npm install @decisionnode/sdk` | `@decisionnode/sdk` |
 | Go | `go get github.com/Bynn-Intelligence/decision-node-go` | `github.com/Bynn-Intelligence/decision-node-go` (package `decisionnode`) |
 | Java, Kotlin (JVM 17+) | Maven `com.bynn:decisionnode` | `com.bynn.decisionnode` |
 | C#, .NET 8+ | `dotnet add package Bynn.DecisionNode` | `Bynn.DecisionNode` |
@@ -226,7 +226,7 @@ for msg, r in zip(messages, results):
 ## TypeScript
 
 ```ts
-import { DecisionNode, truth, choice, score } from "@bynn/decisionnode";
+import { DecisionNode, truth, choice, score } from "@decisionnode/sdk";
 
 const dn = new DecisionNode();
 

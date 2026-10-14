@@ -33,7 +33,7 @@ code can branch on.
 POST https://api.decisionnode.com/v1/decide     the decision call
 GET  https://api.decisionnode.com/v1/models     the models a key may use, with their limits
 POST https://api.decisionnode.com/v1/uploads    put large images once, name them by upload_id
-POST https://api.decisionnode.com/v1/batches    batch jobs: lower price, results within 24 hours
+POST https://api.decisionnode.com/v1/batches    batch jobs, for less than live calls (Flash 50% off, MoE 30% off)
 POST https://api.decisionnode.com/v1/sessions   streaming decisions over a WebSocket
 ```
 
@@ -113,8 +113,11 @@ Details and patterns: [reference/questions.md](reference/questions.md).
 |---|---|---|
 | Several questions about one state | One `decide` with several questions | One request, the state counted once |
 | The same questions about many states, now | `decide_many` (SDK) or `dn batch run --live` | One request per state, run concurrently (default 8) |
-| Many states, results within 24 hours | The Batch API: `run_batch` (SDK) or `dn batch run` | A lower price than live calls |
+| Many states, no answer needed at once | The Batch API: `run_batch` (SDK) or `dn batch run` | Less than live calls: DecisionNode Flash at 50% off the live price and DecisionNode MoE at 30% off |
 | A stream of observations against a fixed prefix (a control loop) | A session: `open_session` (SDK) or `dn session` | The prefix once, then each frame |
+
+A batch has no set finishing time, so poll it; requests still unanswered 24 hours
+after it is finalized expire, unbilled.
 
 Questions in one request are independent: an answer never depends on the other
 questions or their order. One answer is never input to another inside a request; a

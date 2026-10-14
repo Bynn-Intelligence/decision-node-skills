@@ -111,12 +111,14 @@ dn batch run tickets.jsonl --questions triage.json --out results.jsonl
 the whole response body for a single-question command. `--meta` adds `request_id`,
 `model`, `latency_ms`, `input_tokens` and `safety`.
 
-`dn batch run` uses the Batch API: a lower price, results within 24 hours, polled
-every `--poll` seconds (default 60). `--live` sends the lines as live requests
-instead, `--concurrency` at a time, and `--resume` skips lines already in `--out`.
-Both read JSON Lines (full requests, or states with `--questions`) and write
-`{"index", "id", "response"}` or `{"index", "id", "error"}` per line in input
-order. Exit codes: [errors.md](errors.md).
+`dn batch run` uses the Batch API, for less than live calls: DecisionNode Flash at
+50% off the live price and DecisionNode MoE at 30% off. A batch has no set
+finishing time, so `dn` polls it every `--poll` seconds (default 60); requests
+still unanswered 24 hours after it is finalized expire, unbilled. `--live` sends
+the lines as live requests instead, `--concurrency` at a time, and `--resume`
+skips lines already in `--out`. Both read JSON Lines (full requests, or states
+with `--questions`) and write `{"index", "id", "response"}` or `{"index", "id",
+"error"}` per line in input order. Exit codes: [errors.md](errors.md).
 
 Settings live in `~/.config/decisionnode/config.toml`, with named profiles chosen
 by `--profile` or `DECISIONNODE_PROFILE`.

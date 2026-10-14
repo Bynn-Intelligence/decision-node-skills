@@ -53,7 +53,7 @@ Argument problems raise the language's own argument error (`ValueError`,
 | `models()` | The models the key may use, with their limits. Free. |
 | `upload(images)` | Uploads images (`POST /v1/uploads`) and returns one `upload_id` each, valid for one hour. |
 | `open_session(...)` | Opens a session for streaming decisions; `Session.send`, `replies` and `end`, and `supervise` for a feed that reopens on its own. |
-| `batches.create`, `add`, `finalize`, `get`, `list`, `results`, `cancel`, and `run_batch(requests)` | The Batch API: a lower price, results within 24 hours. `run_batch` creates, adds, finalizes, polls and returns the results. |
+| `batches.create`, `add`, `finalize`, `get`, `list`, `results`, `cancel`, and `run_batch(requests)` | The Batch API, for less than live calls: DecisionNode Flash at 50% off the live price and DecisionNode MoE at 30% off. A batch has no set finishing time, so poll it; requests still unanswered 24 hours after it is finalized expire, unbilled. `run_batch` creates, adds, finalizes, polls and returns the results. |
 | `check_request(method, request)` | Runs every local check a call would run, sends nothing. |
 | `decide_raw(body)` | Sends the body as given and returns the parsed JSON, for API fields newer than the SDK. |
 

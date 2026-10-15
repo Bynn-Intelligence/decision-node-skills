@@ -8,7 +8,7 @@ description: >-
   reading probabilities and confidence, asking several questions in one decide
   call, decide_many, batches and sessions, images (up to 16), videos sent as
   frames, boosters (specialist readings of images, such as age, AI-generated,
-  text, and distances and named objects for robots and drones, returned as
+  faces, text, and distances and named objects for robots and drones, returned as
   evidence), fine-tuned model names, errors and
   retries, the SDKs (Python, TypeScript, Go, Java, C#, Ruby, PHP, Rust), the dn
   CLI and the docs MCP server. Use when code or an agent needs to classify,
@@ -154,6 +154,8 @@ response as `evidence`. Boosters never answer or add a question.
 |---|---|---|
 | `age` | A picture of a person (the largest face) | `age_years`, `low`, `high`, `confidence`, `faces` |
 | `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator` (null unless likely generated), `c2pa_signer`, and `c2pa: "untrusted"` when the file's Content Credentials are not trusted |
+| `face_detection` | Any picture | `faces` (how many), `detections` (most confident first: a `box` with corners `x1`, `y1`, `x2`, `y2` and a `confidence` per face) |
+| `face_recognition` | A picture of a person | `faces` (searched), `matches` (best first: `box`, `score`, the `collection`, the item's `reference`, and `label` for your own item or `name` for a public figure) |
 | `ocr` | Any picture | `text` (the reading, in the format the `prompt` option asks for), `truncated` |
 | `bynn_depth` (Depth Vision) | Any picture | Meters: `ahead` (nearest obstacle straight ahead, the floor left out, or null), `directions` (7, left to right), `ground`, `grid` (`grid_size` by `grid_size`, option 2 to 16, default 8), `depth_min`, `depth_max`, `depth_median`, `width`, `height` |
 | `bynn_segment` (Segment Vision) | Any picture | What the required `prompt` option names: `prompts`, then `instances` by score, each `label`, `score`, `box`, `polygon`, `area`, `centroid`, `opening`, `depth` and `size_m` (meters); `depth_source`, `assumed_hfov_deg` |
@@ -179,6 +181,9 @@ response as `evidence`. Boosters never answer or add a question.
   `https://decisionnode.com/docs/pricing`.
 - `POST /v1/decide` and batch lines take boosters; sessions do not.
 - Options go in the object form: `{"name": "ocr", "options": {"prompt": ...}}`,
+  `{"name": "face_recognition", "options": {"collection": "celebrities", "threshold": 0.6}}`
+  (`collection` required: `celebrities` or the id of one of your workspace's face
+  collections; `threshold` 0 to 1, default 0.5),
   `{"name": "bynn_depth", "options": {"grid_size": 8}}`,
   `{"name": "bynn_segment", "options": {"prompt": ["purple gate", "landing pad"]}}`.
   A request naming `ocr` gets a client timeout of 30 s per attempt and is never

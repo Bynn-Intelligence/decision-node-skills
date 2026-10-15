@@ -115,11 +115,17 @@ SDK; TypeScript types the names it knows and takes any other string, so
 other value as received), `latency_ms`, `billed_calls` (the calls of that booster
 billed on the request) and `results`. Each result is an
 `AgeReading` (`image`, `faces`, `age_years`, `low`, `high`, `confidence`; the age
-fields empty when `faces` is 0) or an `AiGeneratedReading` (`image`, `generated`,
+fields empty when `faces` is 0), an `AiGeneratedReading` (`image`, `generated`,
 `confidence`, `method`, `top_generator` with `name` and `probability` or empty
 when the picture does not read as likely generated, `c2pa_signer`, and `c2pa`,
 which is `"untrusted"` for Content Credentials that are not trusted and empty
-otherwise). Depth Vision's and Segment Vision's readings are generic readings: read
+otherwise), a `FaceDetectionReading` (`image`, `faces`, `detections`, each a `box`
+of corners `x1`, `y1`, `x2`, `y2` and a `confidence`), a `FaceRecognitionReading`
+(`image`, `faces`, `matches`, each a `box`, a `score`, the `collection`, the item's
+`reference`, and `name` or `label`, empty when absent) or an `OcrReading` (`image`,
+`text`, `truncated`). The face collections `face_recognition` searches are made with
+`collections.create(name)` and filled with `collections.enroll(collection_id, image,
+reference, label)`, or in the console. Depth Vision's and Segment Vision's readings are generic readings: read
 their fields from the raw reading (`raw` in Python). A reading of a booster the SDK does not know, or one with a field
 missing or of the wrong type, is a generic reading holding its raw fields, and the
 decision does not fail. So are the entries of pictures a booster did not read

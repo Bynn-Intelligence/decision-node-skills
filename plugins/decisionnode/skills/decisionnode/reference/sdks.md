@@ -107,7 +107,8 @@ a booster that needs an option, `Booster(name, images, require, options)`, sent 
 when not given; a `Booster` with no option set is sent as the bare name. Left out
 or empty, the request carries no `boosters` key. Names are
 strings, not a closed set, so a booster added on the server works with an older
-SDK; TypeScript types them as `"age" | "ai_generated" | (string & {})`.
+SDK; TypeScript types the names it knows and takes any other string, so
+`bynn_depth` and `bynn_segment` work in every SDK.
 
 `decision.evidence` maps each booster's name, in the request's order, to an
 `Evidence` with `version`, `status` (`ok`, `timeout`, `error`, `skipped`, or any
@@ -118,7 +119,8 @@ fields empty when `faces` is 0) or an `AiGeneratedReading` (`image`, `generated`
 `confidence`, `method`, `top_generator` with `name` and `probability` or empty
 when the picture does not read as likely generated, `c2pa_signer`, and `c2pa`,
 which is `"untrusted"` for Content Credentials that are not trusted and empty
-otherwise). A reading of a booster the SDK does not know, or one with a field
+otherwise). Depth Vision's and Segment Vision's readings are generic readings: read
+their fields from the raw reading (`raw` in Python). A reading of a booster the SDK does not know, or one with a field
 missing or of the wrong type, is a generic reading holding its raw fields, and the
 decision does not fail. So are the entries of pictures a booster did not read
 (`{"image": id}` under a `timeout` or `error` status) or could not decode
@@ -207,6 +209,19 @@ d.usage.boosters                          # booster calls billed
 
 # A booster that needs an option: only the poster, and fail if it cannot be read.
 boosters = ["age", Booster("ai_generated", images=["poster"], require=True)]
+
+# Robots and drones: distances and the things you name, read from the raw reading.
+d = dn.decide(
+    state={"vehicle": "drone", "task": "fly through the next gate"},
+    images=[Image("front", url=frame_url)],
+    questions={"clear": truth("Is the path straight ahead clear for at least 2 meters?")},
+    boosters=[
+        Booster("bynn_depth", options={"grid_size": 8}),
+        Booster("bynn_segment", options={"prompt": ["purple gate", "orange H landing pad"]}),
+    ],
+)
+d.evidence["bynn_depth"].results[0].raw["ahead"]          # 3.21 (meters, or None)
+d.evidence["bynn_segment"].results[0].raw["instances"]    # matches, best first
 ```
 
 Many records:

@@ -62,7 +62,8 @@ turns the file into frames on your machine with `ffmpeg` and `ffprobe` from your
 
 Boosters: `--booster NAME`, repeatable, in order; `--booster NAME:required` sets
 `require`, so a failed or late reading fails the command (exit 6) instead of being
-left out. `boosters` in a request file of `dn decide` or a batch line works too.
+left out. `boosters` in a request file of `dn decide` or a batch line works too,
+and is where a booster's options go (`bynn_segment` needs its `prompt`).
 The answer is printed first, then the `evidence`.
 
 Models: `-m decisionnode-flash@acme/fraud` (a fine-tuned model of the key's

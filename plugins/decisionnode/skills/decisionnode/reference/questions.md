@@ -133,6 +133,8 @@ answers. Response headers carry `x-request-id`, `x-decisionnode-model` and
 | Extract a field from a fixed set | `choice` over the candidates, for example currencies |
 | Verify a document image | Expected values in the state, one `truth` per field: "Does the total on the receipt equal the total in the claim?" |
 | Check the person or the picture | `truth` questions with the `age` or `ai_generated` booster |
+| Read the text in a picture | `truth` or `choice` questions with the `ocr` booster |
+| Steer a robot or a drone | `truth` ("Is the path ahead clear for 2 meters?") and `point` questions with the `bynn_depth` and `bynn_segment` boosters |
 | Many records | `decide_many`, the Batch API, or `dn batch run` |
 
 ## Images
@@ -213,10 +215,11 @@ request fails if it cannot:
 | `name` (in an object) | The booster's name. An object takes only `name`, `images`, `require` and `options`. |
 | `images` (in an object) | The request's image ids the booster reads. Left out: every image. |
 | `require` (in an object) | `true`: a booster that fails or does not answer in time fails the request with the 529 `booster_unavailable`. Otherwise the decision runs without that reading. |
-| `options` (in an object) | Settings of a booster; neither `age` nor `ai_generated` has any, so a key here is a 400 |
+| `options` (in an object) | Settings of a booster: `ocr` takes `prompt`; `bynn_depth` takes `grid_size` (2 to 16, default 8); `bynn_segment` takes `prompt` (required: one phrase as a string, or an array of 1 to 4, each at most 120 characters), `max_instances` (1 to 16, default 8), `min_score` (0 to 1, default 0.25), `polygon_points` (3 to 64, default 24) and `depth` (default `true`). `age` and `ai_generated` take none. Any other key or value is a 400 `api_usage_error`. |
 
 Boosters belong to the request, not to a question: every question sees every
-reading. Each has a time budget (800 ms) and they run side by side. Batch lines
+reading. Each has a time budget (800 ms; `ocr` more, so give a request naming it 30 s
+per attempt and never retry it after a timeout) and they run side by side. Batch lines
 take `boosters` like a live request; sessions do not (a 400).
 
 The response:
@@ -255,6 +258,9 @@ The response:
 | `evidence.<name>.billed_calls` | The calls of this booster billed on this request: one per image it read with status `ok`, a reading reused from a cache included, and 0 for a booster that failed or timed out and for a refused request. The entries sum to `usage.boosters`. |
 | `evidence.<name>.status` | `ok`; `timeout` (no answer within its budget); `error`; `skipped` (none of the request's images is one it reads). With `timeout` or `error`, `results` lists `{"image": id}` with no reading for each picture the booster was meant to read; with `skipped` it is empty. Within an `ok` entry, a picture the booster could not decode reads `{"image": id, "readable": false}` and is not billed. |
 | `evidence.<name>.results` | One entry per image read, named by `image`. `age`: `age_years`, `low`, `high`, `confidence`, `faces` (with `faces` 0 the age fields are left out). `ai_generated`: `generated` (probability the picture was made by a generator), `confidence`, `method` (`inference` from the pixels, `c2pa` when the file's trusted Content Credentials declare it generated or edited by AI, which overrides the pixels), `top_generator` (`name`, `probability`; `null` unless an `inference` reading says likely generated, and always `null` on a `c2pa` reading), `c2pa_signer` (who signed trusted Content Credentials, else `null`), and `c2pa: "untrusted"` only when the file's Content Credentials validate but are not trusted (no signer, no override). A photograph reads `"top_generator": null`. |
+| `evidence.<name>.results` for `ocr` | `text` (the reading, in the format the prompt asks for; empty when the picture shows no text) and `truncated` |
+| `evidence.<name>.results` for `bynn_depth` | `ahead` (meters to the nearest obstacle straight ahead, in the middle third of the picture, the floor left out; `null` when none is found), `directions` (7 entries for 7 vertical strips, left to right, each meters or `null`), `ground` (`true` when a floor was found and left out), `grid_rows`, `grid_cols` and `grid` (meters, row by row from the top left), `depth_min`, `depth_max`, `depth_median`, `width`, `height` (pixels) |
+| `evidence.<name>.results` for `bynn_segment` | `width`, `height`, `prompts` (the phrases searched for), `instances` (best first, `[]` when nothing is found): `label` (the phrase it matched), `score`, `box` `[x1, y1, x2, y2]`, `polygon`, `area`, `centroid` `[x, y]`, `opening` (the hole of a gate, doorway or ring, else `null`), `depth` (`median`, `opening_median`, `opening_rim_median` in meters) and `size_m`; then `depth_source` and `assumed_hfov_deg`. Coordinates are fractions from the top left. |
 | `usage.booster_tokens` | The readings' share of `input_tokens`, counted once per request |
 | `usage.boosters` | The booster calls billed: one per booster and image read with status `ok` |
 
@@ -266,6 +272,49 @@ input tokens at the model's price; the current prices are on
 `https://decisionnode.com/docs/pricing`. A timed-out or failed booster is free, and a request
 refused by the safety check pays nothing for its boosters. Every booster is on for
 a new workspace; an owner or admin can turn one off in the console.
+
+### Robots and drones
+
+Depth Vision (`bynn_depth`) and Segment Vision (`bynn_segment`) read a camera picture
+for a machine that moves: how far away things are, and where the things you name are.
+Ask the question your code acts on and read its answer; the readings are evidence.
+
+```json
+{
+  "state": {"vehicle": "drone", "altitude_m": 1.5, "task": "fly through the next gate"},
+  "images": [{ "id": "front", "upload_id": "upl_..." }],
+  "boosters": [
+    { "name": "bynn_depth", "options": { "grid_size": 8 } },
+    { "name": "bynn_segment", "options": { "prompt": ["purple gate", "orange H landing pad"] } }
+  ],
+  "questions": {
+    "clear": { "type": "truth", "instructions": "Is the path straight ahead clear for at least 2 meters?" },
+    "gate": { "type": "point", "instructions": "The centre of the opening of the purple gate.", "units": "normalized" }
+  }
+}
+```
+
+A Segment Vision reading of that picture:
+
+```json
+{ "image": "front", "width": 1280, "height": 720, "prompts": ["purple gate", "orange H landing pad"],
+  "instances": [
+    { "label": "purple gate", "score": 0.91, "box": [0.31, 0.22, 0.58, 0.81],
+      "polygon": [[0.31, 0.22], [0.58, 0.22], [0.58, 0.81], [0.31, 0.81]], "area": 0.12,
+      "centroid": [0.45, 0.47], "opening": null,
+      "depth": { "median": 4.2, "opening_median": null, "opening_rim_median": null },
+      "size_m": { "width": 1.6, "height": 2.1, "opening": null } } ],
+  "depth_source": "bynn_depth", "assumed_hfov_deg": 65 }
+```
+
+- Descriptive phrases match better than one word: "orange H landing pad", "purple
+  octagonal frame on a pole".
+- With `depth` on (the default), each match carries its distance and size in meters;
+  the sizes assume the field of view in `assumed_hfov_deg`.
+- The distances and sizes are estimates from one picture, for decisions and planning,
+  never a safety stop: a robot or a drone uses stereo cameras or LiDAR for that.
+- Each picture a booster reads is one booster call, depth inside Segment Vision
+  included.
 
 ## Fine-tuned models
 

@@ -7,8 +7,9 @@ description: >-
   image. Covers picking the question type, writing the state and the questions,
   reading probabilities and confidence, asking several questions in one decide
   call, decide_many, batches and sessions, images (up to 16), videos sent as
-  frames, boosters (specialist readings of images, such as age and
-  AI-generated, returned as evidence), fine-tuned model names, errors and
+  frames, boosters (specialist readings of images, such as age, AI-generated,
+  text, and distances and named objects for robots and drones, returned as
+  evidence), fine-tuned model names, errors and
   retries, the SDKs (Python, TypeScript, Go, Java, C#, Ruby, PHP, Rust), the dn
   CLI and the docs MCP server. Use when code or an agent needs to classify,
   route, triage, check, verify, gate, count, locate or rate text, images or
@@ -153,6 +154,9 @@ response as `evidence`. Boosters never answer or add a question.
 |---|---|---|
 | `age` | A picture of a person (the largest face) | `age_years`, `low`, `high`, `confidence`, `faces` |
 | `ai_generated` | Any picture | `generated` (probability), `confidence`, `method` (`inference` or `c2pa`), `top_generator` (null unless likely generated), `c2pa_signer`, and `c2pa: "untrusted"` when the file's Content Credentials are not trusted |
+| `ocr` | Any picture | `text` (the reading, in the format the `prompt` option asks for), `truncated` |
+| `bynn_depth` (Depth Vision) | Any picture | Meters: `ahead` (nearest obstacle straight ahead, the floor left out, or null), `directions` (7, left to right), `ground`, `grid` (`grid_size` by `grid_size`, option 2 to 16, default 8), `depth_min`, `depth_max`, `depth_median`, `width`, `height` |
+| `bynn_segment` (Segment Vision) | Any picture | What the required `prompt` option names: `prompts`, then `instances` by score, each `label`, `score`, `box`, `polygon`, `area`, `centroid`, `opening`, `depth` and `size_m` (meters); `depth_source`, `assumed_hfov_deg` |
 
 ```json
 "boosters": ["age", "ai_generated"]
@@ -174,6 +178,15 @@ response as `evidence`. Boosters never answer or add a question.
   its boosters. The current prices are on the pricing page:
   `https://decisionnode.com/docs/pricing`.
 - `POST /v1/decide` and batch lines take boosters; sessions do not.
+- Options go in the object form: `{"name": "ocr", "options": {"prompt": ...}}`,
+  `{"name": "bynn_depth", "options": {"grid_size": 8}}`,
+  `{"name": "bynn_segment", "options": {"prompt": ["purple gate", "landing pad"]}}`.
+  A request naming `ocr` gets a client timeout of 30 s per attempt and is never
+  retried after a timeout.
+- Depth Vision and Segment Vision are made for robots and drones. Segment Vision's
+  coordinates are fractions of the picture from its top left; descriptive phrases
+  match better than one word. Their distances and sizes are estimates from one
+  picture, for decisions and planning, never a safety stop.
 
 Details: [reference/questions.md](reference/questions.md#boosters).
 

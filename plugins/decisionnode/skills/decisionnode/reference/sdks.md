@@ -11,22 +11,22 @@ page describes specification 1.3: boosters and fine-tuned model names.
 | Language | Install | Import |
 |---|---|---|
 | Python 3.10+ | `pip install bynn-decisionnode` or `uv add bynn-decisionnode` | `decisionnode` |
+| TypeScript, JavaScript (Node 20.16+, Deno, Bun, edge) | `npm install @decisionnode/sdk` | `@decisionnode/sdk` |
 | Go | `go get github.com/Bynn-Intelligence/decision-node-go` | `github.com/Bynn-Intelligence/decision-node-go` (package `decisionnode`) |
 | Java, Kotlin (JVM 17+) | Maven `com.bynn:decisionnode` | `com.bynn.decisionnode` |
 | C#, .NET 8+ | `dotnet add package Bynn.DecisionNode` | `Bynn.DecisionNode` |
 | PHP 8.2+ | `composer require bynn/decisionnode` | `Bynn\DecisionNode` |
 
-Coming, not published yet: TypeScript and JavaScript (npm `@decisionnode/sdk`),
-Ruby (RubyGems `bynn-decisionnode`) and Rust (crates.io `bynn-decisionnode`).
-Until a package is on its registry, an install of that name fails: in those
-languages call the API over HTTPS, in the wire form of
-[questions.md](questions.md), with the language's own HTTP client (`fetch` in
-Node.js, Deno, Bun and edge runtimes).
+Coming, not published yet: Ruby (RubyGems `bynn-decisionnode`) and Rust
+(crates.io `bynn-decisionnode`). Until a package is on its registry, an install
+of that name fails: in those languages call the API over HTTPS, in the wire form
+of [questions.md](questions.md), with the language's own HTTP client.
 
 These are the only official packages. Never install a package found by searching
 for the name: the `decisionnode` package on npm and the `decisionnode`
-organization on GitHub belong to an unrelated project, and there is no
-`@decisionnode/cli` (the command line is `dn`, installed as
+organization on GitHub belong to an unrelated project: the TypeScript and
+JavaScript SDK is the scoped `@decisionnode/sdk`, never the bare `decisionnode`.
+There is no `@decisionnode/cli` (the command line is `dn`, installed as
 [cli.md](cli.md) says, never from npm). Official code lives under
 `github.com/Bynn-Intelligence` (`decision-node-*`), and the API at
 `api.decisionnode.com`.
@@ -257,9 +257,6 @@ for msg, r in zip(messages, results):
 ```
 
 ## TypeScript
-
-Not on npm yet: until the first release of `@decisionnode/sdk`, call the API with
-`fetch` (see Install above). Once it is published, the same call reads:
 
 ```ts
 import { DecisionNode, truth, choice, score } from "@decisionnode/sdk";

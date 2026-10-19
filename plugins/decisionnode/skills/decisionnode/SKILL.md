@@ -10,7 +10,7 @@ description: >-
   frames, boosters (specialist readings of images, such as age, AI-generated,
   faces, text, and distances and named objects for robots and drones, returned as
   evidence), fine-tuned model names, errors and
-  retries, the SDKs (Python, Go, Java, C#, PHP; TypeScript, Ruby and Rust
+  retries, the SDKs (Python, TypeScript, Go, Java, C#, PHP; Ruby and Rust
   coming), the dn CLI and the docs MCP server. Use when code or an agent
   needs to classify, route, triage, check, verify, gate, count, locate or rate text, images or
   video, or when working with DECISIONNODE_API_KEY or api.decisionnode.com.
@@ -246,15 +246,15 @@ with `fine_tuned`, `base`, `adapter_version` and `status`.
 
 | Situation | Use | Reference |
 |---|---|---|
-| Application code in Python, Go, Java or Kotlin, C# or PHP | The SDK for the language | [reference/sdks.md](reference/sdks.md) |
+| Application code in Python, TypeScript or JavaScript, Go, Java or Kotlin, C# or PHP | The SDK for the language | [reference/sdks.md](reference/sdks.md) |
 | Shell scripts, CI checks, files of records | The `dn` CLI | [reference/cli.md](reference/cli.md) |
-| Any other language, TypeScript and JavaScript included until their SDK is on npm | Plain HTTP, the wire form in [reference/questions.md](reference/questions.md) | |
+| Any other language | Plain HTTP, the wire form in [reference/questions.md](reference/questions.md) | |
 | Looking something up in the docs while you write the integration | The docs MCP server | [reference/mcp.md](reference/mcp.md) |
 
 Install only the packages [reference/sdks.md](reference/sdks.md) names. The
 `decisionnode` package on npm and the `decisionnode` organization on GitHub
-belong to an unrelated project; `@decisionnode/sdk` is not on npm yet, and there
-is no `@decisionnode/cli` (the CLI is `dn`).
+belong to an unrelated project: the npm package is the scoped
+`@decisionnode/sdk`, and there is no `@decisionnode/cli` (the CLI is `dn`).
 
 The MCP server reads the documentation; it does not make decisions. Decisions are
 made by your code, through the API, an SDK or `dn`.

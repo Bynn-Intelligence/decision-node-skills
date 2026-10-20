@@ -216,7 +216,7 @@ request fails if it cannot:
 | `name` (in an object) | The booster's name. An object takes only `name`, `images`, `require` and `options`. |
 | `images` (in an object) | The request's image ids the booster reads. Left out: every image. |
 | `require` (in an object) | `true`: a booster that fails or does not answer in time fails the request with the 529 `booster_unavailable`. Otherwise the decision runs without that reading. |
-| `options` (in an object) | Settings of a booster: `face_recognition` takes `collection` (required: `celebrities`, the public collection, or the id of one of your workspace's face collections) and `threshold` (0 to 1, default 0.5); `ocr` takes `prompt`; `bynn_depth` takes `grid_size` (2 to 16, default 8); `bynn_segment` takes `prompt` (required: one phrase as a string, or an array of 1 to 4, each at most 120 characters), `max_instances` (1 to 16, default 8), `min_score` (0 to 1, default 0.25), `polygon_points` (3 to 64, default 24) and `depth` (default `true`). `age`, `ai_generated` and `face_detection` take none. Any other key or value is a 400 `api_usage_error`. |
+| `options` (in an object) | Settings of a booster: `face_recognition` takes `collection` (required: `celebrities`, the public collection, or the id of one of your workspace's face collections) and `threshold` (0 to 1, default 0.5); `ocr` takes `prompt`; `bynn_depth` takes `grid_size` (2 to 16, default 8); `bynn_segment` takes `prompt` (required: one phrase as a string, or an array of 1 to 4, each at most 120 characters), `max_instances` (1 to 16, default 8), `min_score` (0 to 1, default 0.25), `polygon_points` (3 to 64, default 24) and `depth` (default `true`). `knowledge` takes `collection` (required: a knowledge base's `col_` id), `query`, `scope`, `match`, `filter`, `top_k`, `max_tokens`, `pinned`, `min_score` and `include_text` ([knowledge.md](knowledge.md)). `age`, `ai_generated` and `face_detection` take none. Any other key or value is a 400 `api_usage_error`. |
 
 Boosters belong to the request, not to a question: every question sees every
 reading. Each has a time budget (800 ms; `ocr` more, so give a request naming it 30 s
@@ -275,6 +275,27 @@ input tokens at the model's price; the current prices are on
 `https://decisionnode.com/docs/pricing`. A timed-out or failed booster is free, and a request
 refused by the safety check pays nothing for its boosters. Every booster is on for
 a new workspace; an owner or admin can turn one off in the console.
+
+### Knowledge
+
+`knowledge` reads no picture: it finds the passages of a knowledge base (a collection
+of type `text` holding the workspace's own documents) that apply to the request's
+state and questions, and gives them to the model as facts and rules to apply. The
+object form only, without `images`:
+
+```json
+"boosters": [
+  { "name": "knowledge", "require": true,
+    "options": { "collection": "col_3f6c1a9e0b2d4c7f8a1e5d9b2c4f6a80", "scope": "M-42" } }
+]
+```
+
+Its evidence has one result, not one per picture: the `passages` the model read,
+pinned first, each cited by `item`, `reference`, `title`, `heading`, `chunk` and the
+UTF-8 byte offsets `byte_start`, `byte_end` into the document's stored text, with
+`warnings`, `omitted` and `pending_items`. One knowledge call a reading. Creating a
+knowledge base, adding documents, pinning, scope keys, search and every field:
+[knowledge.md](knowledge.md).
 
 ### Robots and drones
 

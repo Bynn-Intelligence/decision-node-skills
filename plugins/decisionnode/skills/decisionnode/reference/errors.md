@@ -7,7 +7,9 @@ Built into every SDK and the CLI:
 - 10 seconds per attempt, covering the whole attempt from sending to the last
   byte of the body. 2 retries after the first attempt.
 - Retried: 408, 429, every 500 to 599 (529 included, `booster_unavailable` too),
-  timeouts, connection errors.
+  timeouts, connection errors. Not the knowledge 529 with `details.reason`
+  `ingestion_delayed`: documents have waited over 15 minutes to be read, so the caller
+  decides.
 - Wait: `retry-after-ms` when sent, else `Retry-After` (seconds or an HTTP date),
   capped at 60 s; else exponential backoff from 0.5 s with jitter, capped at 8 s.
 - Never retried: 400, 401, 402, 403, 404, 413, 422. Resending them unchanged gives
@@ -44,15 +46,19 @@ class locally, before any request.
 | 400, `booster_unknown` | `BadRequestError` | A name that is not a booster. Check the spelling. |
 | 400, `booster_input_mismatch` | `BadRequestError` | A booster that reads images on a request without one, or an `images` entry that is not an image of the request |
 | 400, `api_usage_error` on `boosters` | `BadRequestError` | The list is malformed: more than 4, a booster named twice, an entry that is neither a name nor an object with `name`, a key of the object other than `name`, `images`, `require` and `options`, a key in `options`. The reason says which. |
+| 400, `collection_type_mismatch` | `BadRequestError` | `knowledge` or a search naming a face collection, `face_recognition` a knowledge base, or a document sent to a face collection |
+| 400, `upload_expired`, `upload_consumed`, `upload_not_found`, `upload_incomplete` | `BadRequestError` | A document's `upload_id` is stale. The SDKs upload a file they placed themselves again, once; upload again yourself for an id you gave. |
+| 400, `upload_purpose_mismatch` | `BadRequestError` | An image upload named as a document, or a knowledge upload named as an image. Upload with the right purpose. |
 | 401 | `AuthenticationError` | Key missing or wrong. Check `DECISIONNODE_API_KEY`. |
 | 402 | `InsufficientCreditError` | The prepaid balance is empty. Send again only after credit is added. |
 | 403, `refusal_error` | `RefusalError` (`category`: `harm` or `self_harm`) | Refused under the usage policy. Do not retry. |
-| 403, any other | `PermissionDeniedError` | Not allowed: `booster_not_enabled` (the booster is turned off for the workspace), `workspace_suspended`. Do not retry. |
-| 404 | `NotFoundError` | Wrong path or base URL |
-| 413, or over 26,214,400 bytes before sending | `RequestTooLargeError` | The body is over 25 MiB. Send large images as uploads (`POST /v1/uploads`) or by URL. The SDKs check the encoded body before sending and raise this locally, sending nothing. |
-| 422 | `ValidationError` (`entries`) | A field is missing or of the wrong type, or a list is too long (more than 16 images, more than 4 videos); `entries` lists each one |
-| 429 | `RateLimitError` (`retry_after`) | Retried automatically; raised only after the retries |
-| 529 | `OverloadedError` (`retry_after`) | Retried automatically. With `error_type` `booster_unavailable`, a booster with `require: true` failed or timed out; `boosters` shows which. |
+| 403, any other | `PermissionDeniedError` | Not allowed: `booster_not_enabled` (the booster is turned off for the workspace), `workspace_suspended`, `key_scope_denied` (a search, `include_text` or a knowledge upload from a key that is not full-scope). Do not retry. |
+| 404 | `NotFoundError` | Wrong path or base URL; `collection_not_found`, `item_not_found` for an id that is not this workspace's |
+| 409 | `DecisionNodeError` (`status` 409, `error_type`, `details`) | `knowledge_collection_empty` (`require: true` on a knowledge base with no document ready or on its way; `details.items`, `details.failed`), `reference_taken` (`details.item_id`), `pinned_budget_exceeded` (the pins are over the knowledge base's cap), `chunks_limit_reached`, `items_limit_reached`, `collections_limit_reached`. Fix the cause; not retried. |
+| 413, or over 26,214,400 bytes before sending | `RequestTooLargeError` | The body is over 25 MiB. Send large images as uploads (`POST /v1/uploads`) or by URL. The SDKs check the encoded body before sending and raise this locally, sending nothing. With `error_type` `item_too_large`: a document's text is over 512 KiB once normalised; split it. |
+| 422 | `ValidationError` (`entries`) | A field is missing or of the wrong type, or a list is too long (more than 16 images, more than 4 videos); `entries` lists each one. `invalid_text`: a document that is not UTF-8 or holds a NUL. |
+| 429 | `RateLimitError` (`retry_after`, `details`) | Retried automatically; raised only after the retries. Document writes have their own rate per workspace (`details.reason` `ingest_queue_full` or `ingest_tokens_per_hour`). |
+| 529 | `OverloadedError` (`retry_after`) | Retried automatically. With `error_type` `booster_unavailable`, a booster with `require: true` failed or timed out, or a required `knowledge` reading found no document ready yet (`Retry-After: 5`); `boosters` shows which. With `details.reason` `ingestion_delayed` (`Retry-After: 60`) it is raised at once. |
 | other 5xx | `ServerError` | Retried automatically |
 | none | `ConnectionError`, `TimeoutError` | Retried automatically |
 

@@ -42,6 +42,10 @@ dn batch   run <requests.jsonl | -> [--questions FILE] [--out FILE] [--poll S] [
 dn batch   run --live <requests.jsonl | -> [--questions FILE] [--concurrency N] [--out FILE] [--resume]
 dn batch   create | add | finalize | get | list | results | cancel
 dn session <open.json> [--out FILE]                   (frames as JSON Lines on stdin)
+dn collections create <name> --type text [--scope-key KEY]
+dn documents add <collection_id> <file | -> [--title T] [--reference REF] [--pinned] [--pin-rank N] [--label L] [--metadata JSON] [--wait]
+dn documents replace | get [--text] | list | chunks | delete | wait [item_id]
+dn search  <collection_id> <query> [--scope VALUE] [--top-k N] [--match JSON] [--filter JSON]
 dn models
 dn auth    login | status | logout
 dn config  get | set | list
@@ -65,6 +69,15 @@ Boosters: `--booster NAME`, repeatable, in order; `--booster NAME:required` sets
 left out. `boosters` in a request file of `dn decide` or a batch line works too,
 and is where a booster's options go (`bynn_segment` needs its `prompt`).
 The answer is printed first, then the `evidence`.
+
+Knowledge: `--knowledge COLLECTION` on any decision command adds the `knowledge`
+booster (`COLLECTION:required` sets `require`), with `--knowledge-scope`,
+`--knowledge-top-k` and `--knowledge-query`. `dn documents add` takes a file by path
+(converted to text by the API; a small text or Markdown file goes inline) or Markdown
+on stdin (`-`); `dn documents wait` waits until the documents are read. On a terminal
+a knowledge reading prints its passages (number, pinned, title and heading, score);
+JSON stays as received. A 409 `knowledge_collection_empty` exits 5, the knowledge 529
+exits 6. More: [knowledge.md](knowledge.md).
 
 Models: `-m decisionnode-flash@acme/fraud` (a fine-tuned model of the key's
 workspace) is sent as given. `dn models` shows `fine_tuned`, `base`,
@@ -92,6 +105,11 @@ dn number "How many line items are on the receipt?" --image receipt.jpg --max 10
 dn truth "Is the person in the picture an adult?" --image person.jpg --booster age
 
 dn truth "Does a person fall in the video?" --video dock.mp4 --fps 2
+
+dn collections create "Claims policy" --type text --scope-key mission
+dn documents add col_... policy.md --pinned --wait
+dn truth "Should the claim be approved under our policy?" -f claim.json \
+  --knowledge col_...:required --knowledge-scope M-42
 
 route=$(dn choice "Which queue?" -f ticket.txt -o billing -o bug -o other --value)
 

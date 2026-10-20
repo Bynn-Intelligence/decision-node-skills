@@ -29,7 +29,7 @@ an SDK or the `dn` CLI. Per-client setup is in
 
 | Skill | Covers |
 |---|---|
-| `decisionnode` | Question types, writing state and questions, reading answers, `decide`, `decide_many`, batches and sessions, images and videos, boosters, fine-tuned model names, errors and retries, the SDKs and the `dn` CLI. |
+| `decisionnode` | Question types, writing state and questions, reading answers, `decide`, `decide_many`, batches and sessions, images and videos, boosters, knowledge bases and cited passages, fine-tuned model names, errors and retries, the SDKs and the `dn` CLI. |
 
 ## Credentials
 

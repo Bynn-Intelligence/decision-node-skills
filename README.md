@@ -53,7 +53,7 @@ none.
 
 | Skill | Covers |
 |---|---|
-| `decisionnode` | Choosing `truth`, `choice`, `score`, `number`, `point` or `box`; writing the state and the questions; reading probabilities and confidence; several questions in one `decide`; `decide_many`, batches and sessions; images and videos; boosters and their evidence; fine-tuned model names; errors and retries; the SDKs and the `dn` CLI. |
+| `decisionnode` | Choosing `truth`, `choice`, `score`, `number`, `point` or `box`; writing the state and the questions; reading probabilities and confidence; several questions in one `decide`; `decide_many`, batches and sessions; images and videos; boosters and their evidence; knowledge bases (documents, pinned rules, scope keys, search) and the passages a decision cites; fine-tuned model names; errors and retries; the SDKs and the `dn` CLI. |
 
 A taste of what the agent learns to write:
 

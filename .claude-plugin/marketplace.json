@@ -10,7 +10,7 @@
     {
       "name": "decisionnode",
       "source": "./plugins/decisionnode",
-      "description": "Integrate DecisionNode, the decision engine: pick truth, choice, score, number, point or box, write the state and the questions, read probabilities and confidence, batch with decide, decide_many and the Batch API, send images and videos, add boosters, call fine-tuned models, handle errors and retries, and use the SDKs and the dn CLI. Bundles the DecisionNode docs MCP server.",
+      "description": "Integrate DecisionNode, the decision engine: pick truth, choice, score, number, point or box, write the state and the questions, read probabilities and confidence, batch with decide, decide_many and the Batch API, send images and videos, add boosters, apply knowledge bases of your own documents, call fine-tuned models, handle errors and retries, and use the SDKs and the dn CLI. Bundles the DecisionNode docs MCP server.",
       "category": "development",
       "author": {
         "name": "Bynn Intelligence",
@@ -26,6 +26,7 @@
         "routing",
         "triage",
         "boosters",
+        "knowledge",
         "mcp"
       ],
       "skills": [

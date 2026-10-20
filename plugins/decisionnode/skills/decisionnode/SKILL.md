@@ -4,16 +4,17 @@ description: >-
   Integrate DecisionNode, the API for fast, calibrated narrow decisions: a
   yes-or-no probability (truth), one option of a set (choice), a place on an
   ordered scale (score), a value on a grid (number), or a point or box in an
-  image. Covers picking the question type, writing the state and the questions,
-  reading probabilities and confidence, asking several questions in one decide
-  call, decide_many, batches and sessions, images (up to 16), videos sent as
-  frames, boosters (specialist readings of images, such as age, AI-generated,
-  faces, text, and distances and named objects for robots and drones, returned as
-  evidence), fine-tuned model names, errors and
-  retries, the SDKs (Python, TypeScript, Go, Java, C#, PHP; Ruby and Rust
-  coming), the dn CLI and the docs MCP server. Use when code or an agent
-  needs to classify, route, triage, check, verify, gate, count, locate or rate text, images or
-  video, or when working with DECISIONNODE_API_KEY or api.decisionnode.com.
+  image. Covers question types, writing the state and the questions, reading
+  probabilities and confidence, several questions in one decide call,
+  decide_many, batches and sessions, images (up to 16), videos as frames,
+  boosters (age, AI-generated, faces, text, distances and named objects for
+  robots and drones, returned as evidence), knowledge (a workspace's own
+  documents: pinned rules, scope keys, search, cited passages), fine-tuned
+  model names, errors and retries, the SDKs (Python,
+  TypeScript, Go, Java, C#, PHP; Ruby and Rust coming), the dn CLI and the docs
+  MCP server. Use when code or an agent needs to classify, route, triage, check,
+  verify, gate, count, locate or rate text, images or video, or apply its own
+  policies to a decision, or works with DECISIONNODE_API_KEY.
 allowed-tools: Bash(dn:*), Bash(claude:*), Bash(curl:*)
 compatibility: Linux, macOS, Windows
 metadata:
@@ -36,6 +37,7 @@ GET  https://api.decisionnode.com/v1/models     the models a key may use, with t
 POST https://api.decisionnode.com/v1/uploads    put large images once, name them by upload_id
 POST https://api.decisionnode.com/v1/batches    batch jobs, for less than live calls (Flash 50% off, MoE 30% off)
 POST https://api.decisionnode.com/v1/sessions   streaming decisions over a WebSocket
+POST https://api.decisionnode.com/v1/collections knowledge bases (type text) and face collections
 ```
 
 Authentication is `Authorization: Bearer $DECISIONNODE_API_KEY` (keys start with
@@ -193,7 +195,72 @@ response as `evidence`. Boosters never answer or add a question.
   match better than one word. Their distances and sizes are estimates from one
   picture, for decisions and planning, never a safety stop.
 
+`knowledge` is a booster too, but reads your own documents instead of a picture:
+see Knowledge below.
+
 Details: [reference/questions.md](reference/questions.md#boosters).
+
+## Knowledge
+
+A knowledge base holds a workspace's own documents: a claims policy, house rules, a
+mission's special instructions, a robot's operating manual. The `knowledge` booster
+finds the passages that apply to a decision and gives them to the model as facts and
+rules to apply, and `evidence.knowledge` says which passages it read, with a citation
+for each. A knowledge base is a collection of type `text`.
+
+```python
+from decisionnode import DecisionNode, Document, knowledge, truth
+
+dn = DecisionNode()
+kb = dn.collections.create("Claims policy", type="text", scope_key="mission")
+
+dn.collections.add_document(kb["id"], "# Receipts\n\nReject any claim over 500 SEK without a receipt.",
+                            title="Claims policy 2026", pinned=True)              # always applies
+dn.collections.add_document(kb["id"], Document(path="m-42-brief.pdf"),
+                            metadata={"mission": "M-42"})                          # only for M-42
+dn.collections.wait_until_ready(kb["id"])                                          # read in the background
+
+d = dn.decide(
+    state={"claim": {"amount": "740.00", "receipt": False}, "mission": "M-42"},
+    questions={"approve": truth("Should the claim be approved under our policy?")},
+    boosters=[knowledge(kb["id"], scope="M-42", require=True)],
+)
+for p in d.evidence["knowledge"].results[0].passages:
+    print(p.n, p.pinned, p.title, p.heading, p.item, p.byte_start, p.byte_end)
+```
+
+- **Documents**: Markdown or plain text inline, or a file (text, Markdown, PDF, DOCX,
+  PPTX, XLSX, HTML, PNG, JPEG, TIFF, WebP; 50 MB, a PDF 100 pages). A file is
+  converted to text and only the text is kept once it is ready. Reading is
+  asynchronous: `queued`, `processing`, then `ready` or `failed`; use `wait=True` (up to
+  10 s) or `wait_until_ready`.
+- **Pin a rule that must always apply.** Search finds what looks relevant; a pinned
+  document is given every time, whatever the query. Keep pins short: their load is
+  capped (512 tokens a scope value by default).
+- **Scope keys** separate missions, sites or customers: with `scope_key` `mission`, a
+  document whose `metadata` has `"mission": "M-42"` is only read by a decision naming
+  `scope="M-42"`; documents without the key are global. A decision without `scope`
+  reads the global ones only (warning `scope_not_named`).
+- **Options**: `collection` (required), `scope`, `query` (built from the questions and
+  the state when left out), `top_k` (4; 0 to 20, `0` pins only), `max_tokens`
+  (`"auto"` or 128 to 8,192), `match`, `filter`, `pinned`, `min_score`, `include_text`
+  (each passage's text, a full-scope key only). The object form only; no `images`.
+- **Citations**: each passage has `item`, `reference`, `title`, `heading`, `chunk`, and
+  `byte_start`, `byte_end`, UTF-8 byte offsets into the document's stored text
+  (`get_item(..., include_text=True)`); `score` is `null` for a pin.
+- **`require`**: without it, a reading that did not run leaves the decision to run
+  without it, unbilled. With it, the call fails: a 529 `booster_unavailable` while
+  documents are still being read (retried; `details.reason` `ingestion_delayed` past
+  15 minutes is raised at once), a 409 `knowledge_collection_empty` when none is ready
+  or on its way. It guarantees the pins and the top passage, not every relevant one.
+- **Search**: `collections.search(collection_id, query, scope=...)` returns the
+  passages with their text, without a decision, to check a knowledge base before a
+  decision relies on it (a full-scope key).
+- One knowledge call per reading or search; documents' ingestion and storage are
+  billed too. The `dn` CLI has `dn documents add`, `dn search` and `--knowledge` on
+  every decision command.
+
+Details: [reference/knowledge.md](reference/knowledge.md).
 
 ## Errors and retries
 
@@ -298,5 +365,7 @@ if d["escalate"].truth >= 0.8:
 - Do not retry a 4xx unchanged, and never retry a refusal.
 - Do not treat a booster's reading as the decision: ask the question, and read
   `evidence` only to explain or log the answer.
+- Do not leave a rule that must always apply to search: pin it. Do not put a whole
+  manual in `state` when a knowledge base can hold it.
 - Do not send the API key from a browser or a mobile app; call DecisionNode from
   your server.
